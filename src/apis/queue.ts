@@ -4,7 +4,10 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
+import { getLogger } from '../core/logging/setup.js'
 import { ok, fail } from '../core/utils/response.js'
+
+const log = getLogger('queue')
 
 const TASK_DISPLAY_NAMES: Record<string, string> = {
   archive_chat_history: '聊天记录归档',
@@ -86,7 +89,7 @@ async function collectQueueState(app: FastifyInstance): Promise<QueueStateResult
         })
       }
     } catch (err) {
-      console.warn('[queue] 获取定时任务失败', err)
+      log.warn({ err }, '获取定时任务失败')
     }
   }
 
@@ -148,7 +151,7 @@ async function collectQueueState(app: FastifyInstance): Promise<QueueStateResult
 
           totalLength += active.length + waiting.length
         } catch (err) {
-          console.warn(`[queue] 队列 ${queueName} 数据收集失败`, err)
+          log.warn({ queueName, err }, '队列数据收集失败')
         }
       }),
     )
@@ -184,7 +187,7 @@ export async function queueRoutes(app: FastifyInstance): Promise<void> {
           })
         }
       } catch (err) {
-        console.warn('获取定时任务失败', err)
+        log.warn({ err }, '获取定时任务失败')
       }
     }
 
@@ -217,7 +220,7 @@ export async function queueRoutes(app: FastifyInstance): Promise<void> {
             })
           }
         } catch (err) {
-          console.warn(`[queue] 获取队列 ${queueName} 活跃任务失败`, err)
+          log.warn({ queueName, err }, '获取队列活跃任务失败')
         }
       }),
     )
@@ -260,7 +263,7 @@ export async function queueRoutes(app: FastifyInstance): Promise<void> {
             })
           }
         } catch (err) {
-          console.warn(`[queue] 获取队列 ${queueName} Worker 信息失败`, err)
+          log.warn({ queueName, err }, '获取队列 Worker 信息失败')
         }
       }),
     )
@@ -289,7 +292,7 @@ export async function queueRoutes(app: FastifyInstance): Promise<void> {
       )
       await reply.send(ok({ queue: 'bullmq', length: total }))
     } catch (err) {
-      console.warn('获取队列长度失败', err)
+      log.warn({ err }, '获取队列长度失败')
       await reply.send(fail('无法获取队列长度', { queue: 'bullmq', length: null }))
     }
   })
@@ -317,7 +320,7 @@ export async function queueRoutes(app: FastifyInstance): Promise<void> {
             })
           }
         } catch (err) {
-          console.warn(`[queue] 获取待处理任务失败`, err)
+          log.warn({ err }, '获取待处理任务失败')
         }
       }),
     )
@@ -370,7 +373,7 @@ export async function queueRoutes(app: FastifyInstance): Promise<void> {
             })
             reply.raw.write(`data: ${payload}\n\n`)
           } catch (err) {
-            console.warn('[queue/stream] 数据收集失败', err)
+            log.warn({ err }, '队列流数据收集失败')
           }
         })()
       }, intervalSecs * 1000)

@@ -5,7 +5,10 @@
 import type { Job } from 'bullmq'
 
 import { loadConfig } from '../core/config.js'
+import { getLogger } from '../core/logging/setup.js'
 import { getRpcBridge } from '../core/rpc/bridge.js'
+
+const log = getLogger('dailyLike')
 
 /**
  * BullMQ 每日点赞任务处理器。
@@ -20,10 +23,10 @@ export async function dailyLikeProcessor(_job: Job): Promise<Record<string, unkn
   const resp = await bridge.call('request_like', {}, 60_000)
 
   if (resp.success) {
-    console.info('[dailyLike] 每日点赞 RPC 调用成功', { data: resp.data })
+    log.info({ data: resp.data }, '每日点赞 RPC 调用成功')
     return resp.data ?? {}
   }
 
-  console.error('[dailyLike] 每日点赞 RPC 调用失败', { error: resp.error })
+  log.error({ error: resp.error }, '每日点赞 RPC 调用失败')
   throw new Error(`点赞 RPC 失败: ${resp.error ?? 'unknown'}`)
 }

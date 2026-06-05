@@ -5,6 +5,7 @@
 import type { ChatMessage } from '../../../prisma/chat/generated/index.js'
 import type { ChatPrismaClient } from '../db/client.js'
 import { Shutdown, Startup } from '../lifecycle/registry.js'
+import { logger, type Logger } from '../logging/setup.js'
 
 export type { ChatMessage }
 
@@ -59,6 +60,8 @@ export interface MessageContext {
  * 通过 Startup / Shutdown 生命周期注册，由 LifecycleOrchestrator 管理。
  */
 export class ChatHistoryService {
+  private readonly _log: Logger = logger.child({ name: 'ChatHistoryService' })
+
   constructor(private readonly chatDb: ChatPrismaClient) {}
 
   // ════════════════════════════════════════════
@@ -99,10 +102,7 @@ export class ChatHistoryService {
       })
     } catch (err) {
       // 持久化失败不应中断消息处理流程，仅记录错误
-      console.error('[ChatHistoryService] 消息持久化失败', {
-        messageId: data.messageId,
-        error: err,
-      })
+      this._log.error({ messageId: data.messageId, err }, '消息持久化失败')
     }
   }
 

@@ -4,6 +4,8 @@
 
 import type { FastifyInstance } from 'fastify'
 
+import { getLogger } from '../core/logging/setup.js'
+
 import { botRoutes } from './bot.js'
 import { chatRoutes } from './chat.js'
 import { checkinRoutes } from './checkin.js'
@@ -15,6 +17,8 @@ import { likeRoutes } from './like.js'
 import { logsRoutes } from './logs.js'
 import { permissionRoutes } from './permission.js'
 import { queueRoutes } from './queue.js'
+
+const log = getLogger('router')
 
 /**
  * 注册所有 API 路由到 Fastify 实例。
@@ -49,7 +53,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
       { prefix: '/api/llm' },
     )
   } catch (err) {
-    console.warn('[router] LLM 路由注册失败：', err)
+    log.warn({ err }, 'LLM 路由注册失败')
   }
 
   // 人员管理路由
@@ -57,6 +61,6 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
     const { registerPersonnelRoutes } = await import('../core/personnel/api.js')
     await registerPersonnelRoutes(app)
   } catch (err) {
-    console.warn('[router] 人员管理路由注册失败：', err)
+    log.warn({ err }, '人员管理路由注册失败')
   }
 }

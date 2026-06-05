@@ -4,6 +4,7 @@
 
 import type { Context } from '../core/framework/context.js'
 import { Component, OnRegex, MessageScope } from '../core/framework/decorators.js'
+import { logger } from '../core/logging/setup.js'
 import { MessageBuilder } from '../core/protocol/segment.js'
 import type { JrlpService } from '../services/jrlp.js'
 
@@ -18,6 +19,8 @@ function getTodayShanghai(): Date {
 }
 
 class JrlpHandler {
+  private readonly _log = logger.child({ name: 'jrlp' })
+
   /** 随机抽取今日群老婆。 */
 
   async drawWife(ctx: Context): Promise<boolean> {
@@ -43,7 +46,7 @@ class JrlpHandler {
         await ctx.reply('该群暂无可抽取的成员，请等待群成员同步后重试')
         return true
       }
-      console.error('抽取今日老婆失败', { groupId: ctx.groupId, userId: ctx.userId, err })
+      this._log.error({ groupId: ctx.groupId, userId: ctx.userId, err }, '抽取今日老婆失败')
       await ctx.reply('抽取失败，请稍后重试')
       return true
     }

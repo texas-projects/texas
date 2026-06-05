@@ -5,7 +5,10 @@
 import type { Context } from '../core/framework/context.js'
 import type { ComponentMeta } from '../core/framework/decorators.js'
 import { Component, OnCommand, MessageScope } from '../core/framework/decorators.js'
+import { getLogger } from '../core/logging/setup.js'
 import type { MarkdownRenderer } from '../core/utils/md2img.js'
+
+const log = getLogger('help')
 
 const HELP_PAGE_SIZE = 8
 const RENDER_WIDTH = 680
@@ -83,7 +86,7 @@ async function renderAndSend(
     const b64 = `base64://${buf.toString('base64')}`
     await ctx.reply([Seg.image(b64)])
   } catch (err) {
-    console.error(errorLabel, { userId: ctx.userId, err })
+    log.error({ userId: ctx.userId, err }, errorLabel)
     await ctx.reply('帮助图片生成失败，请稍后重试')
   }
 }

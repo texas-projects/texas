@@ -4,6 +4,7 @@
 
 import type { Redis } from 'ioredis'
 
+import { logger, type Logger } from '../logging/setup.js'
 import { rpcHandlerExecSeconds, rpcInflight, rpcRegisteredHandlers } from '../monitoring/metrics.js'
 import { createRedis } from '../utils/redis-factory.js'
 
@@ -37,6 +38,7 @@ export class RPCConsumer {
   private _stopSignal = false
   private _inflight = 0
   private readonly _maxConcurrency: number
+  private readonly _log: Logger = logger.child({ name: 'RPCConsumer' })
   /** 用于等待所有 inflight 请求完成。 */
   private _drainResolve: (() => void) | undefined
 
@@ -53,11 +55,11 @@ export class RPCConsumer {
    */
   registerHandler(action: string, handler: ActionHandler): void {
     if (this._handlers.has(action)) {
-      console.warn(`[RPCConsumer] RPC handler 重复注册，将覆盖原有 handler: ${action}`)
+      this._log.warn(`RPC handler 重复注册，将覆盖原有 handler: ${action}`)
     }
     this._handlers.set(action, handler)
     rpcRegisteredHandlers.set(this._handlers.size)
-    console.debug(`[RPCConsumer] RPC handler 已注册: ${action}`)
+    this._log.debug(`RPC handler 已注册: ${action}`)
   }
 
   /**
@@ -65,12 +67,12 @@ export class RPCConsumer {
    */
   async start(): Promise<void> {
     if (this._running) {
-      console.debug('[RPCConsumer] RPC 消费者已在运行，跳过重复启动')
+      this._log.debug('RPC 消费者已在运行，跳过重复启动')
       return
     }
     this._running = true
     this._stopSignal = false
-    console.info('[RPCConsumer] RPC 消费者已启动')
+    this._log.info('RPC 消费者已启动')
     // 以后台形式运行，不等待
     void this._consumeLoop()
   }
@@ -83,7 +85,7 @@ export class RPCConsumer {
 
     // 等待所有 inflight 请求完成
     if (this._inflight > 0) {
-      console.info(`[RPCConsumer] 等待 in-flight RPC 请求完成 (count=${String(this._inflight)})`)
+      this._log.info(`等待 in-flight RPC 请求完成 (count=${String(this._inflight)})`)
       await new Promise<void>((resolve) => {
         this._drainResolve = resolve
       })
@@ -92,7 +94,7 @@ export class RPCConsumer {
     this._redis.disconnect()
     this._pub.disconnect()
     this._running = false
-    console.info('[RPCConsumer] RPC 消费者已停止')
+    this._log.info('RPC 消费者已停止')
   }
 
   /** 主消费循环：BLPOP → 并发处理 → PUBLISH 响应。 */
@@ -107,7 +109,7 @@ export class RPCConsumer {
         const [, raw] = result
         // 背压保护：超过最大并发时丢弃并记录警告
         if (this._inflight >= this._maxConcurrency) {
-          console.warn(`[RPCConsumer] 背压限制已达 ${String(this._maxConcurrency)}，丢弃请求`)
+          this._log.warn(`背压限制已达 ${String(this._maxConcurrency)}，丢弃请求`)
           continue
         }
 
@@ -128,7 +130,7 @@ export class RPCConsumer {
         // _stopSignal 可能在异步过程中被 stop() 改变
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (this._stopSignal) break
-        console.error('[RPCConsumer] RPC 消费循环异常:', err)
+        this._log.error({ err }, 'RPC 消费循环异常')
         // 防止异常风暴
         await new Promise<void>((resolve) => setTimeout(resolve, 1000))
       }
@@ -141,7 +143,7 @@ export class RPCConsumer {
     try {
       req = JSON.parse(raw) as RPCRequest
     } catch {
-      console.warn('[RPCConsumer] RPC 请求解析失败:', raw.slice(0, 200))
+      this._log.warn(`RPC 请求解析失败: ${raw.slice(0, 200)}`)
       return
     }
 
@@ -150,7 +152,7 @@ export class RPCConsumer {
     try {
       await this._pub.publish(respChannel, JSON.stringify(rpcResp))
     } catch (err) {
-      console.error(`[RPCConsumer] RPC 响应发布失败 (action=${req.action}):`, err)
+      this._log.error({ err }, `RPC 响应发布失败 (action=${req.action})`)
     }
   }
 
@@ -160,7 +162,7 @@ export class RPCConsumer {
   private async _execute(req: RPCRequest): Promise<RPCResponse> {
     const handler = this._handlers.get(req.action)
     if (handler === undefined) {
-      console.warn(`[RPCConsumer] RPC 未注册的 action: ${req.action}`)
+      this._log.warn(`RPC 未注册的 action: ${req.action}`)
       return {
         request_id: req.request_id,
         success: false,
@@ -191,7 +193,7 @@ export class RPCConsumer {
       const elapsed = (Date.now() - t0) / 1000
       rpcHandlerExecSeconds.labels({ action: req.action }).observe(elapsed)
       const message = err instanceof Error ? err.message : String(err)
-      console.warn(`[RPCConsumer] RPC 请求执行失败 (action=${req.action}): ${message}`)
+      this._log.warn(`RPC 请求执行失败 (action=${req.action}): ${message}`)
       return {
         request_id: req.request_id,
         success: false,

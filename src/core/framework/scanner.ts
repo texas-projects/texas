@@ -6,7 +6,9 @@ import { readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-import { logger } from '../logging/setup.js'
+import { getLogger } from '../logging/setup.js'
+
+const log = getLogger('scanner')
 
 import { componentRegistry, handlerRegistry } from './decorators.js'
 import type { CompositeHandlerMapping, HandlerMethod } from './mapping.js'
@@ -65,7 +67,7 @@ export class ComponentScanner {
     try {
       entries = await readdir(absDir)
     } catch {
-      logger.warn(`[scanner] 目录未找到，跳过：${absDir}`)
+      log.warn(`目录未找到，跳过：${absDir}`)
       return
     }
 
@@ -75,7 +77,7 @@ export class ComponentScanner {
         try {
           await import(pathToFileURL(fullPath).href)
         } catch (err) {
-          logger.warn(`[scanner] 模块导入失败：${fullPath}，错误：${String(err)}`)
+          log.warn(`模块导入失败：${fullPath}，错误：${String(err)}`)
         }
       }
     }
@@ -122,7 +124,7 @@ export class ComponentScanner {
       }
 
       this._componentNames.push(componentName)
-      logger.info(`[scanner] 组件已注册：${componentName}，handler 数量：${String(handlerCount)}`)
+      log.info(`组件已注册：${componentName}，handler 数量：${String(handlerCount)}`)
     }
   }
 }

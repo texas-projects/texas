@@ -11,6 +11,7 @@ import type {
 } from '../../prisma/main/generated/index.js'
 import type { MainPrismaClient } from '../core/db/client.js'
 import { Startup } from '../core/lifecycle/registry.js'
+import { logger, type Logger } from '../core/logging/setup.js'
 import type { BotAPI } from '../core/protocol/api.js'
 
 export type { Feedback, FeedbackStatus, FeedbackSource, FeedbackType }
@@ -43,6 +44,8 @@ export interface ListFeedbacksParams {
  * 通过 Startup 生命周期注册，由 LifecycleOrchestrator 管理。
  */
 export class FeedbackService {
+  private readonly _log: Logger = logger.child({ name: 'FeedbackService' })
+
   constructor(
     private readonly db: MainPrismaClient,
     private readonly botApi: BotAPI,
@@ -69,10 +72,7 @@ export class FeedbackService {
 
     // 通知管理员（不阻塞主流程）
     this._notifyAdmins(feedback).catch((err: unknown) => {
-      console.error('[FeedbackService] 通知管理员失败', {
-        feedbackId: feedback.id,
-        error: err,
-      })
+      this._log.error({ feedbackId: feedback.id, err }, '通知管理员失败')
     })
 
     return feedback
@@ -150,10 +150,7 @@ export class FeedbackService {
 
     if (isDoneTransition) {
       this._notifyUser(updated).catch((err: unknown) => {
-        console.error('[FeedbackService] 通知用户失败', {
-          feedbackId: updated.id,
-          error: err,
-        })
+        this._log.error({ feedbackId: updated.id, err }, '通知用户失败')
       })
     }
 
@@ -181,7 +178,7 @@ export class FeedbackService {
     })
 
     if (admins.length === 0) {
-      console.warn('[FeedbackService] 无管理员可通知')
+      this._log.warn('无管理员可通知')
       return
     }
 
@@ -200,11 +197,7 @@ export class FeedbackService {
       try {
         await this.botApi.sendPrivateMsg(Number(admin.qq), message)
       } catch (err: unknown) {
-        console.warn('[FeedbackService] 通知管理员失败', {
-          adminQq: admin.qq,
-          feedbackId: feedback.id,
-          error: err,
-        })
+        this._log.warn({ adminQq: admin.qq, feedbackId: feedback.id, err }, '通知管理员失败')
       }
     })
 
@@ -227,11 +220,7 @@ export class FeedbackService {
         await this.botApi.sendPrivateMsg(Number(feedback.userId), message)
       }
     } catch (err) {
-      console.warn('[FeedbackService] 通知用户失败', {
-        userId: feedback.userId,
-        feedbackId: feedback.id,
-        error: err,
-      })
+      this._log.warn({ userId: feedback.userId, feedbackId: feedback.id, err }, '通知用户失败')
     }
   }
 }

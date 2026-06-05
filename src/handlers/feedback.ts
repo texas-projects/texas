@@ -6,6 +6,7 @@
 
 import type { Context } from '../core/framework/context.js'
 import { Component, OnCommand, Permission } from '../core/framework/decorators.js'
+import { logger } from '../core/logging/setup.js'
 import type { FeedbackService } from '../services/feedback.js'
 
 type FeedbackType = 'bug' | 'suggestion' | 'complaint'
@@ -30,6 +31,8 @@ function parseQuickFeedback(args: string): [FeedbackType | null, string] {
 }
 
 class FeedbackHandler {
+  private readonly _log = logger.child({ name: 'feedback' })
+
   /** 提交反馈命令。有参数时直接提交，无参数时提示用法。 */
 
   async submitFeedback(ctx: Context): Promise<boolean> {
@@ -65,7 +68,7 @@ class FeedbackHandler {
       })
       await ctx.reply(`反馈已提交，编号：${feedback.id.slice(0, 8)}`)
     } catch (err) {
-      console.error('创建反馈失败', { userId: ctx.userId, err })
+      this._log.error({ userId: ctx.userId, err }, '创建反馈失败')
       await ctx.reply('反馈提交失败，请稍后重试')
     }
 
@@ -114,7 +117,7 @@ class FeedbackHandler {
 
       await ctx.reply(lines.join(''))
     } catch (err) {
-      console.error('查询反馈失败', { userId: ctx.userId, err })
+      this._log.error({ userId: ctx.userId, err }, '查询反馈失败')
       await ctx.reply('查询失败，请稍后重试')
     }
 

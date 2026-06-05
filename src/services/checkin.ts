@@ -9,6 +9,7 @@ import { checkinStatsKey } from '../core/cache/key-registry.js'
 import type { MainPrismaClient } from '../core/db/client.js'
 import { isPrismaKnownError } from '../core/db/utils.js'
 import { Startup } from '../core/lifecycle/registry.js'
+import { logger, type Logger } from '../core/logging/setup.js'
 import { SHANGHAI_TZ } from '../core/utils/helpers.js'
 
 export type { CheckinRecord }
@@ -90,6 +91,8 @@ interface CheckinCache {
  * 通过 Startup 生命周期注册，由 LifecycleOrchestrator 管理。
  */
 export class CheckinService {
+  private readonly _log: Logger = logger.child({ name: 'CheckinService' })
+
   constructor(
     private readonly db: MainPrismaClient,
     private readonly cache: CacheClient,
@@ -151,7 +154,7 @@ export class CheckinService {
     } catch (err) {
       if (isPrismaKnownError(err) && err.code === 'P2002') {
         // 并发冲突：视为重复签到
-        console.warn('[CheckinService] 签到并发冲突，视为重复', { groupId, userId })
+        this._log.warn({ groupId, userId }, '签到并发冲突，视为重复')
         return { isDuplicate: true, rank: 0, streak, total }
       }
       throw err

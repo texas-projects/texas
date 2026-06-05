@@ -6,6 +6,7 @@ import type { LlmModel, LlmProvider } from '../../../prisma/main/generated/index
 import type { MainPrismaClient } from '../db/client.js'
 import { NotFoundError } from '../errors.js'
 import { Shutdown, Startup } from '../lifecycle/registry.js'
+import { logger, type Logger } from '../logging/setup.js'
 
 import { LLMClient } from './client.js'
 import type { ChatMessage } from './completion.js'
@@ -61,6 +62,7 @@ export interface ChatOptions {
  */
 export class LLMService {
   private readonly client: LLMClient
+  private readonly _log: Logger = logger.child({ name: 'LLMService' })
 
   constructor(private readonly mainDb: MainPrismaClient) {
     this.client = new LLMClient()
@@ -104,7 +106,7 @@ export class LLMService {
         retryInterval: data.retryInterval,
       },
     })
-    console.info('[LLMService] LLM 提供商已创建', { name: data.name })
+    this._log.info({ name: data.name }, 'LLM 提供商已创建')
     return this._providerToDto(provider, [])
   }
 
@@ -138,7 +140,7 @@ export class LLMService {
       this.client.invalidate(providerId)
     }
 
-    console.info('[LLMService] LLM 提供商已更新', { providerId })
+    this._log.info({ providerId }, 'LLM 提供商已更新')
     return this._providerToDto(provider, provider.models)
   }
 
@@ -151,7 +153,7 @@ export class LLMService {
 
     await this.mainDb.llmProvider.delete({ where: { id: providerId } })
     this.client.invalidate(providerId)
-    console.info('[LLMService] LLM 提供商已删除', { providerId })
+    this._log.info({ providerId }, 'LLM 提供商已删除')
   }
 
   // ══════════════════════════════════════════════
@@ -200,10 +202,7 @@ export class LLMService {
       },
       include: { provider: true },
     })
-    console.info('[LLMService] LLM 模型已创建', {
-      modelName: data.modelName,
-      providerId: data.providerId,
-    })
+    this._log.info({ modelName: data.modelName, providerId: data.providerId }, 'LLM 模型已创建')
     return this._modelToDto(model, model.provider)
   }
 
@@ -227,7 +226,7 @@ export class LLMService {
       },
       include: { provider: true },
     })
-    console.info('[LLMService] LLM 模型已更新', { modelId })
+    this._log.info({ modelId }, 'LLM 模型已更新')
     return this._modelToDto(model, model.provider)
   }
 
@@ -239,7 +238,7 @@ export class LLMService {
     if (!existing) throw new NotFoundError(`模型不存在: ${modelId}`)
 
     await this.mainDb.llmModel.delete({ where: { id: modelId } })
-    console.info('[LLMService] LLM 模型已删除', { modelId })
+    this._log.info({ modelId }, 'LLM 模型已删除')
   }
 
   // ══════════════════════════════════════════════

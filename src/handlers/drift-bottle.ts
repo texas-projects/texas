@@ -10,6 +10,7 @@ import {
   MessageScope,
   Permission,
 } from '../core/framework/decorators.js'
+import { logger } from '../core/logging/setup.js'
 import type { MessageSegment } from '../core/protocol/models/segments.js'
 import { MessageBuilder, Seg } from '../core/protocol/segment.js'
 import type { DriftBottleService } from '../services/drift-bottle.js'
@@ -47,6 +48,8 @@ function filterContent(
 }
 
 class DriftBottleHandler {
+  private readonly _log = logger.child({ name: 'driftBottle' })
+
   /** 处理扔漂流瓶请求。 */
 
   async handleThrow(ctx: Context): Promise<boolean> {
@@ -82,7 +85,7 @@ class DriftBottleHandler {
         content,
       })
     } catch (err) {
-      console.error('扔漂流瓶失败', { groupId: ctx.groupId, userId: ctx.userId, err })
+      this._log.error({ groupId: ctx.groupId, userId: ctx.userId, err }, '扔漂流瓶失败')
       await ctx.reply('扔漂流瓶失败，请稍后重试')
       return true
     }
@@ -110,7 +113,7 @@ class DriftBottleHandler {
       const poolId = await svc.getPoolId(groupId)
       bottle = await svc.pickBottle({ poolId, userId: BigInt(ctx.userId) })
     } catch (err) {
-      console.error('捞漂流瓶失败', { groupId: ctx.groupId, userId: ctx.userId, err })
+      this._log.error({ groupId: ctx.groupId, userId: ctx.userId, err }, '捞漂流瓶失败')
       await ctx.reply('捞漂流瓶失败，请稍后重试')
       return true
     }

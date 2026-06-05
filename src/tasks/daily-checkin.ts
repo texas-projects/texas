@@ -5,7 +5,10 @@
 import type { Job } from 'bullmq'
 
 import { loadConfig } from '../core/config.js'
+import { getLogger } from '../core/logging/setup.js'
 import { getRpcBridge } from '../core/rpc/bridge.js'
+
+const log = getLogger('dailyCheckin')
 
 /**
  * BullMQ 每日打卡任务处理器。
@@ -20,10 +23,10 @@ export async function dailyCheckinProcessor(_job: Job): Promise<Record<string, u
   const resp = await bridge.call('request_checkin', { source: 'scheduled' }, 10_000)
 
   if (resp.success) {
-    console.info('[dailyCheckin] 每日打卡 RPC 调用成功', { data: resp.data })
+    log.info({ data: resp.data }, '每日打卡 RPC 调用成功')
     return resp.data ?? {}
   }
 
-  console.error('[dailyCheckin] 每日打卡 RPC 调用失败', { error: resp.error })
+  log.error({ error: resp.error }, '每日打卡 RPC 调用失败')
   throw new Error(`打卡 RPC 失败: ${resp.error ?? 'unknown'}`)
 }

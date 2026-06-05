@@ -82,7 +82,7 @@ export class LifecycleOrchestrator {
       const deps = Object.fromEntries(entry.requires.map((k) => [k, this._services[k]]))
       const provided = await entry.fn(deps)
       Object.assign(this._services, provided)
-      logger.info({ provides: entry.provides }, `[${entry.name}] 业务模块已启动`)
+      logger.info({ name: entry.name, provides: entry.provides }, '业务模块已启动')
     }
 
     return { ...this._services }
@@ -105,9 +105,9 @@ export class LifecycleOrchestrator {
           entry.provides.filter((k) => k in this._services).map((k) => [k, this._services[k]]),
         )
         await hookEntry.fn(svcDict)
-        logger.info({}, `[${entry.name}] 业务模块已关闭`)
+        logger.info({ name: entry.name }, '业务模块已关闭')
       } catch (err) {
-        logger.error({ err }, `[${entry.name}] 业务模块关闭失败`)
+        logger.error({ name: entry.name, err }, '业务模块关闭失败')
       }
     }
   }

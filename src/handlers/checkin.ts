@@ -10,6 +10,7 @@ import {
   MessageScope,
   Permission,
 } from '../core/framework/decorators.js'
+import { logger } from '../core/logging/setup.js'
 import { MessageBuilder } from '../core/protocol/segment.js'
 import type { CheckinService } from '../services/checkin.js'
 
@@ -21,6 +22,8 @@ function getTodayShanghai(): Date {
 }
 
 class CheckinHandler {
+  private readonly _log = logger.child({ name: 'checkin' })
+
   /** 处理用户签到请求，回复排名和连续/累计天数。 */
 
   async handleCheckin(ctx: Context): Promise<boolean> {
@@ -42,7 +45,7 @@ class CheckinHandler {
         today,
       })
     } catch (err) {
-      console.error('用户签到异常', { groupId: ctx.groupId, userId: ctx.userId, err })
+      this._log.error({ groupId: ctx.groupId, userId: ctx.userId, err }, '用户签到异常')
       await ctx.reply('签到失败，请稍后重试')
       return true
     }

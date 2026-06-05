@@ -2,6 +2,7 @@
  * LoggingInterceptor —— 记录事件处理详情。
  */
 
+import { logger, type Logger } from '../../logging/setup.js'
 import type { Context } from '../context.js'
 import type { HandlerInterceptor } from '../interceptor.js'
 import type { ResolvedHandler } from '../mapping.js'
@@ -10,11 +11,13 @@ const CTX_KEY_START_TIME = '_logging_start_time'
 
 /** 日志拦截器：记录事件处理的开始时间、完成耗时及错误信息。 */
 export class LoggingInterceptor implements HandlerInterceptor {
+  private readonly _log: Logger = logger.child({ name: 'dispatcher' })
+
   async preHandle(ctx: Context, _handler: ResolvedHandler): Promise<boolean> {
     ctx.setAttribute(CTX_KEY_START_TIME, Date.now())
     const groupId = ctx.groupId !== undefined ? String(ctx.groupId) : 'N/A'
-    console.log(
-      `[dispatcher] 正在处理事件 post_type=${ctx.event.post_type} user_id=${String(ctx.userId)} group_id=${groupId}`,
+    this._log.debug(
+      `正在处理事件 post_type=${ctx.event.post_type} user_id=${String(ctx.userId)} group_id=${groupId}`,
     )
     return true
   }
@@ -30,11 +33,11 @@ export class LoggingInterceptor implements HandlerInterceptor {
     const handlerName = `${handler.handler.componentName}.${handler.handler.method.name}`
 
     if (error) {
-      console.error(
-        `[dispatcher] ${handlerName} 处理失败，耗时 ${String(durationMs)}ms，错误：${error.message}`,
+      this._log.error(
+        `${handlerName} 处理失败，耗时 ${String(durationMs)}ms，错误：${error.message}`,
       )
     } else {
-      console.log(`[dispatcher] ${handlerName} 处理完成，耗时 ${String(durationMs)}ms`)
+      this._log.debug(`${handlerName} 处理完成，耗时 ${String(durationMs)}ms`)
     }
   }
 }

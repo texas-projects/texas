@@ -11,6 +11,7 @@ import type {
 import type { MainPrismaClient } from '../core/db/client.js'
 import { isPrismaKnownError } from '../core/db/utils.js'
 import { Startup } from '../core/lifecycle/registry.js'
+import { logger, type Logger } from '../core/logging/setup.js'
 import type { BotAPI } from '../core/protocol/api.js'
 
 export type { LikeTask, LikeHistory, LikeSource }
@@ -54,6 +55,7 @@ export interface ListHistoryParams {
  */
 export class LikeService {
   private _currentTask: Promise<void> | null = null
+  private readonly _log: Logger = logger.child({ name: 'LikeService' })
 
   constructor(
     private readonly db: MainPrismaClient,
@@ -83,7 +85,7 @@ export class LikeService {
       const resp = await this.botApi.sendLike(Number(qqBig), times)
       success = resp.status === 'ok'
     } catch (err) {
-      console.warn('[LikeService] send_like 异常', { qq, times, error: err })
+      this._log.warn({ qq, times, err }, 'send_like 异常')
     }
 
     // 历史记录写入（失败不影响返回结果）
@@ -98,12 +100,7 @@ export class LikeService {
         },
       })
     } catch (err) {
-      console.warn('[LikeService] 点赞历史写入失败', {
-        qq,
-        times,
-        source,
-        error: err,
-      })
+      this._log.warn({ qq, times, source, err }, '点赞历史写入失败')
     }
 
     return success
@@ -245,7 +242,7 @@ export class LikeService {
    */
   requestScheduledLikes(): boolean {
     if (this.isRunning) {
-      console.debug('[LikeService] 定时点赞任务正在执行，跳过本次触发')
+      this._log.debug('定时点赞任务正在执行，跳过本次触发')
       return false
     }
 
@@ -277,7 +274,7 @@ export class LikeService {
           failedCount++
         }
       } catch (err) {
-        console.warn('[LikeService] 定时点赞执行异常', { qq: task.qq, error: err })
+        this._log.warn({ qq: task.qq, err }, '定时点赞执行异常')
         failedCount++
       }
 
@@ -286,11 +283,7 @@ export class LikeService {
       }
     }
 
-    console.info('[LikeService] 本轮定时点赞完成', {
-      total,
-      success: successCount,
-      failed: failedCount,
-    })
+    this._log.info({ total, success: successCount, failed: failedCount }, '本轮定时点赞完成')
   }
 }
 

@@ -4,7 +4,10 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
+import { getLogger } from '../core/logging/setup.js'
 import { ok, fail } from '../core/utils/response.js'
+
+const log = getLogger('bot')
 
 // ── 内部工具 ──
 
@@ -48,7 +51,7 @@ export async function botRoutes(app: FastifyInstance): Promise<void> {
           }
         }
       } catch (err) {
-        console.warn('获取 Bot 登录信息失败', err)
+        log.warn({ err }, '获取 Bot 登录信息失败')
       }
     }
 
@@ -83,7 +86,7 @@ export async function botRoutes(app: FastifyInstance): Promise<void> {
           }
         }
       } catch (err) {
-        console.warn('获取登录信息失败', err)
+        log.warn({ err }, '获取登录信息失败')
       }
 
       try {
@@ -96,7 +99,7 @@ export async function botRoutes(app: FastifyInstance): Promise<void> {
           }
         }
       } catch (err) {
-        console.warn('获取版本信息失败', err)
+        log.warn({ err }, '获取版本信息失败')
       }
     }
 
@@ -155,7 +158,7 @@ export async function botRoutes(app: FastifyInstance): Promise<void> {
           return
         }
       } catch (err) {
-        console.warn('修改 Bot 资料失败', err)
+        log.warn({ err }, '修改 Bot 资料失败')
         await reply.status(500).send(fail('修改失败，请稍后重试'))
         return
       }

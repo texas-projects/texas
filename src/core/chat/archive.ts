@@ -4,6 +4,7 @@
 
 import type { ArchiveStatus } from '../../../prisma/main/generated/index.js'
 import type { ChatPrismaClient, MainPrismaClient } from '../db/client.js'
+import { logger, type Logger } from '../logging/setup.js'
 
 import { ArchiveExporter, PARTITION_NAME_RE } from './exporter.js'
 import type { ArchiveExporterSettings } from './exporter.js'
@@ -38,6 +39,7 @@ export interface ArchiveJobData {
 export class ArchiveService {
   private readonly exporter: ArchiveExporter
   private readonly s3: ArchiveS3
+  private readonly _log: Logger = logger.child({ name: 'ArchiveService' })
 
   constructor(
     private readonly chatDb: ChatPrismaClient,
@@ -94,7 +96,7 @@ export class ArchiveService {
         const result = await this._archivePartition(part)
         results.push(result)
       } catch (err) {
-        console.error('[ArchiveService] 归档分区失败', { partition: part, error: err })
+        this._log.error({ partition: part, err }, '归档分区失败')
         results.push({
           partition: part,
           status: 'failed',
@@ -303,11 +305,7 @@ export class ArchiveService {
         },
       })
 
-      console.info('[ArchiveService] 归档完成', {
-        partition: partitionName,
-        rows: totalRows,
-        compressedBytes,
-      })
+      this._log.info({ partition: partitionName, rows: totalRows, compressedBytes }, '归档完成')
 
       return {
         partition: partitionName,

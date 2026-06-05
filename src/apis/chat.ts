@@ -4,8 +4,11 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
+import { getLogger } from '../core/logging/setup.js'
 import type { ServiceRegistry } from '../core/registries/service-registry.js'
 import { ok, fail } from '../core/utils/response.js'
+
+const log = getLogger('chat')
 
 function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
   const state = (app as unknown as { state: { serviceRegistry: ServiceRegistry } }).state
@@ -151,7 +154,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
         const job = await archiveQueue.add('archive_chat_history', { partitionName })
         await reply.send(ok({ task_id: job.id ?? 'unknown' }, 'Archive task queued'))
       } catch (err) {
-        app.log.error({ err }, '[chat/trigger] 归档任务入队失败')
+        log.error({ err }, '归档任务入队失败')
         await reply.status(500).send(fail(`归档任务入队失败: ${String(err)}`))
       }
     },

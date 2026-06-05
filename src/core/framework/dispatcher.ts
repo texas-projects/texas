@@ -2,8 +2,10 @@
  * EventDispatcher —— 统一事件分发（类似 Spring DispatcherServlet）。
  */
 
+import { logger } from '../logging/setup.js'
 import type { BotAPI } from '../protocol/api.js'
 import type { AnyOneBotEvent } from '../protocol/models/events.js'
+
 
 import { Context, FinishError } from './context.js'
 import type { HandlerInterceptor } from './interceptor.js'
@@ -21,6 +23,8 @@ import type { FeatureChecker } from './ports.js'
  *   异常时：→ afterCompletion(error)
  */
 export class EventDispatcher {
+  private readonly _log = logger.child({ name: 'dispatcher' })
+
   // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   readonly services: Map<Function, unknown>
 
@@ -76,13 +80,13 @@ export class EventDispatcher {
       try {
         const ok = await interceptor.preHandle(ctx, resolved)
         if (!ok) {
-          console.log(`[dispatcher] 拦截器 ${interceptor.constructor.name} 已阻断事件`)
+          this._log.debug(`拦截器 ${interceptor.constructor.name} 已阻断事件`)
           // 依然需要运行 afterCompletion（已完成的前置拦截器），此处简化：直接返回
           return
         }
       } catch (err) {
         handlerError = err instanceof Error ? err : new Error(String(err))
-        console.error(`[dispatcher] preHandle 中发生错误：${handlerError.message}`)
+        this._log.error(`preHandle 中发生错误：${handlerError.message}`)
         break
       }
     }
@@ -102,7 +106,7 @@ export class EventDispatcher {
             await interceptor.postHandle(ctx, resolved)
           } catch (err) {
             handlerError = err instanceof Error ? err : new Error(String(err))
-            console.error(`[dispatcher] postHandle 中发生错误：${handlerError.message}`)
+            this._log.error(`postHandle 中发生错误：${handlerError.message}`)
             break
           }
         }
@@ -115,8 +119,8 @@ export class EventDispatcher {
           // 正常流程终止，不视为错误
         } else {
           handlerError = err instanceof Error ? err : new Error(String(err))
-          console.error(
-            `[dispatcher] handler ${resolved.handler.componentName}.${resolved.handler.method.name} 执行失败：${handlerError.message}`,
+          this._log.error(
+            `handler ${resolved.handler.componentName}.${resolved.handler.method.name} 执行失败：${handlerError.message}`,
           )
         }
       }
@@ -127,7 +131,7 @@ export class EventDispatcher {
       try {
         await interceptor.afterCompletion(ctx, resolved, handlerError)
       } catch (cleanupErr) {
-        console.error(`[dispatcher] afterCompletion 中发生错误：${String(cleanupErr)}`)
+        this._log.error(`afterCompletion 中发生错误：${String(cleanupErr)}`)
       }
     }
   }

@@ -5,8 +5,10 @@
 import type { Queue } from 'bullmq'
 
 import { Startup, Shutdown } from '../core/lifecycle/registry.js'
-import { logger } from '../core/logging/setup.js'
+import { getLogger } from '../core/logging/setup.js'
 import { QUEUE_NAMES } from '../core/tasks/broker.js'
+
+const log = getLogger('scheduler')
 
 // ── 调度器 ID 常量 ──
 
@@ -74,7 +76,7 @@ export async function registerScheduledJobs(queues: Record<string, Queue>): Prom
 
   await Promise.all(jobs)
 
-  logger.info({ jobs: Object.values(SCHEDULER_IDS) }, '[scheduler] 定时任务注册完成')
+  log.info({ jobs: Object.values(SCHEDULER_IDS) }, '定时任务注册完成')
 }
 
 // ── 生命周期注册 ──

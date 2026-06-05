@@ -9,6 +9,7 @@ import type { CacheClient } from '../core/cache/client.js'
 import { checkinDailyKey } from '../core/cache/key-registry.js'
 import type { MainPrismaClient } from '../core/db/client.js'
 import { Startup } from '../core/lifecycle/registry.js'
+import { logger, type Logger } from '../core/logging/setup.js'
 import type { FeaturePermissionService } from '../core/permission/main.js'
 import type { BotAPI } from '../core/protocol/api.js'
 import { SHANGHAI_TZ } from '../core/utils/helpers.js'
@@ -45,6 +46,7 @@ export interface DailyCheckinResult {
  */
 export class DailyCheckinService {
   private _currentTask: Promise<void> | null = null
+  private readonly _log: Logger = logger.child({ name: 'DailyCheckinService' })
 
   constructor(
     private readonly db: MainPrismaClient,
@@ -71,7 +73,7 @@ export class DailyCheckinService {
    */
   requestCheckin(source: CheckinSource = 'ws_connect'): boolean {
     if (this.isRunning) {
-      console.debug('[DailyCheckinService] 打卡任务正在执行，跳过', { source })
+      this._log.debug({ source }, '打卡任务正在执行，跳过')
       return false
     }
 
@@ -88,7 +90,7 @@ export class DailyCheckinService {
 
   private async _runCheckin(source: CheckinSource): Promise<void> {
     if (!this.connMgr.isConnected) {
-      console.warn('[DailyCheckinService] WS 未连接，跳过本轮打卡', { source })
+      this._log.warn({ source }, 'WS 未连接，跳过本轮打卡')
       return
     }
 
@@ -105,10 +107,7 @@ export class DailyCheckinService {
       try {
         alreadyDone = await this.cache.exists(checkinDailyKey(groupId, today))
       } catch (err) {
-        console.warn('[DailyCheckinService] Redis 查询失败，跳过该群', {
-          groupId,
-          error: err,
-        })
+        this._log.warn({ groupId, err }, 'Redis 查询失败，跳过该群')
         skipped++
         continue
       }
@@ -127,10 +126,7 @@ export class DailyCheckinService {
           FEATURE_NAME,
         )
       } catch (err) {
-        console.warn('[DailyCheckinService] 权限查询失败，跳过该群', {
-          groupId,
-          error: err,
-        })
+        this._log.warn({ groupId, err }, '权限查询失败，跳过该群')
         skipped++
         continue
       }
@@ -144,30 +140,24 @@ export class DailyCheckinService {
       try {
         const resp = await this.botApi.sendGroupSign(Number(groupId))
         if (resp.status !== 'ok') {
-          console.warn('[DailyCheckinService] 群打卡 API 返回失败', {
-            groupId,
-            retcode: resp.retcode,
-            message: resp.message,
-          })
+          this._log.warn(
+            { groupId, retcode: resp.retcode, message: resp.message },
+            '群打卡 API 返回失败',
+          )
           failed++
         } else {
           await this.cache.set(checkinDailyKey(groupId, today), '1', CHECKIN_TTL)
           sent++
         }
       } catch (err) {
-        console.warn('[DailyCheckinService] 群打卡异常', { groupId, error: err })
+        this._log.warn({ groupId, err }, '群打卡异常')
         failed++
       }
 
       await new Promise<void>((resolve) => setTimeout(resolve, SEND_DELAY_MS))
     }
 
-    console.info('[DailyCheckinService] 本轮打卡完成', {
-      total: groupIds.length,
-      sent,
-      skipped,
-      failed,
-    })
+    this._log.info({ total: groupIds.length, sent, skipped, failed }, '本轮打卡完成')
   }
 
   private async _getEligibleGroupIds(): Promise<bigint[]> {

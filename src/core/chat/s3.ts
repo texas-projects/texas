@@ -4,6 +4,8 @@
 
 import { Client as MinioClient } from 'minio'
 
+import { logger, type Logger } from '../logging/setup.js'
+
 /** S3 归档配置（从外部注入，对应环境变量）。 */
 export interface S3Settings {
   endpointUrl: string
@@ -40,6 +42,7 @@ export interface ArchiveManifest {
 export class ArchiveS3 {
   private readonly client: MinioClient
   private readonly settings: S3Settings
+  private readonly _log: Logger = logger.child({ name: 'ArchiveS3' })
 
   constructor(settings: S3Settings) {
     this.settings = settings
@@ -99,10 +102,7 @@ export class ArchiveS3 {
   ): Promise<void> {
     await this.ensureBucket(this.settings.archiveBucket)
     await this.client.fPutObject(this.settings.archiveBucket, s3Key, filePath, metadata)
-    console.info('[ArchiveS3] 文件已上传至 S3', {
-      bucket: this.settings.archiveBucket,
-      key: s3Key,
-    })
+    this._log.info({ bucket: this.settings.archiveBucket, key: s3Key }, '文件已上传至 S3')
   }
 
   /**

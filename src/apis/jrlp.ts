@@ -4,9 +4,12 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
+import { getLogger } from '../core/logging/setup.js'
 import type { ServiceRegistry } from '../core/registries/service-registry.js'
 import { ok, fail } from '../core/utils/response.js'
 import type { JrlpService } from '../services/jrlp.js'
+
+const log = getLogger('jrlp')
 
 function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
   const state = (app as unknown as { state: { serviceRegistry: ServiceRegistry } }).state
@@ -103,7 +106,7 @@ export async function jrlpRoutes(app: FastifyInstance): Promise<void> {
         })
         await reply.send(ok(recordToDict(record as unknown as Record<string, unknown>), '设置成功'))
       } catch (err) {
-        console.warn('创建老婆预设失败', err)
+        log.warn({ err }, '创建老婆预设失败')
         await reply.send(fail('设置失败，请检查参数或记录是否已存在'))
       }
     },
