@@ -2,8 +2,8 @@
  * Markdown 转 PNG 图片渲染器 —— 基于 BrowserService 将 Markdown 渲染为图片。
  */
 
-import type { BrowserService } from '../browser/service.js'
-import { BrowserRenderError } from '../browser/service.js'
+import type { BrowserService } from '@/core/browser/service.js'
+import { BrowserRenderError } from '@/core/browser/service.js'
 
 // ── HTML 模板 ──
 

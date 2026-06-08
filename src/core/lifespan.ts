@@ -7,8 +7,6 @@ import { resolve } from 'node:path'
 import type { FastifyInstance } from 'fastify'
 import type { Redis } from 'ioredis'
 
-import type { DailyCheckinService } from '../services/daily-checkin.js'
-
 import { CacheClient } from './cache/client.js'
 import type { Config } from './config.js'
 import { createMainDb, createChatDb } from './db/client.js'
@@ -26,6 +24,8 @@ import { createBullMQConnection, getQueue, QUEUE_NAMES } from './tasks/broker.js
 import { createRedis, checkRedisReachable } from './utils/redis-factory.js'
 import { ConnectionManager } from './ws/connection.js'
 import { registerWsRoute } from './ws/server.js'
+
+import type { DailyCheckinService } from '@/services/daily-checkin.js'
 
 /**
  * 应用生命周期编排。

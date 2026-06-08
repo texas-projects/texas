@@ -7,17 +7,17 @@
 
 import { randomUUID } from 'node:crypto'
 
-import type { CacheClient } from '../cache/client.js'
+import type { CacheClient } from '@/core/cache/client.js'
 import {
   permGroupKey,
   permPrivateKey,
   permGroupEnabledKey,
   PERM_GROUP_GLOB,
-} from '../cache/key-registry.js'
-import type { MainPrismaClient } from '../db/client.js'
-import { componentRegistry } from '../framework/decorators.js'
-import { Startup } from '../lifecycle/registry.js'
-import { FeatureRegistry } from '../registries/feature-registry.js'
+} from '@/core/cache/key-registry.js'
+import type { MainPrismaClient } from '@/core/db/client.js'
+import { componentRegistry } from '@/core/framework/decorators.js'
+import { Startup } from '@/core/lifecycle/registry.js'
+import { FeatureRegistry } from '@/core/registries/feature-registry.js'
 
 /** 缓存 TTL（秒）。 */
 const CACHE_TTL = 60

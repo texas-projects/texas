@@ -4,12 +4,12 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import { NotFoundError } from '../errors.js'
-import { ok, fail } from '../utils/response.js'
-
 import type { PersonnelService } from './main.js'
 import type { PersonnelQueryService } from './query.js'
 import type { SyncCoordinator } from './sync.js'
+
+import { NotFoundError } from '@/core/errors.js'
+import { ok, fail } from '@/core/utils/response.js'
 
 /** 从 Fastify 请求中获取服务实例（服务挂载在 app.state 上）。 */
 function getPersonnelService(app: FastifyInstance): PersonnelService {

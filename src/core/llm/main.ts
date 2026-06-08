@@ -2,12 +2,9 @@
  * LLM 业务逻辑层 —— 提供商/模型 CRUD 与 LLM 调用编排。
  */
 
-import type { LlmModel, LlmProvider } from '#prisma/main'
+import { logger, type Logger } from '@logger'
 
-import type { MainPrismaClient } from '../db/client.js'
-import { NotFoundError } from '../errors.js'
-import { Shutdown, Startup } from '../lifecycle/registry.js'
-import { logger, type Logger } from '../logging/setup.js'
+import type { LlmModel, LlmProvider } from '#prisma/main'
 
 import { LLMClient } from './client.js'
 import type { ChatMessage } from './completion.js'
@@ -18,6 +15,10 @@ import {
   type UpdateModelData,
   type UpdateProviderData,
 } from './schemas.js'
+
+import type { MainPrismaClient } from '@/core/db/client.js'
+import { NotFoundError } from '@/core/errors.js'
+import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
 
 export type { LlmProvider, LlmModel }
 

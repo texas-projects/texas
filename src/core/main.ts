@@ -10,18 +10,18 @@ import { resolve } from 'node:path'
 
 import fastifyStatic from '@fastify/static'
 import fastifyWebsocket from '@fastify/websocket'
+import { createLogger, setLogger, logger } from '@logger'
 import Fastify, { type FastifyInstance } from 'fastify'
-
-import { authPlugin } from '../apis/plugins/auth.js'
-import { corsPlugin } from '../apis/plugins/cors.js'
-import { swaggerPlugin } from '../apis/plugins/swagger.js'
-import { registerRoutes } from '../apis/router.js'
 
 import { loadConfig } from './config.js'
 import { setupLifecycle } from './lifespan.js'
-import { createLogger, setLogger, logger } from './logging/setup.js'
 import { metricsRegistry } from './monitoring/metrics.js'
 import { VERSION, DESCRIPTION } from './version.js'
+
+import { authPlugin } from '@/apis/plugins/auth.js'
+import { corsPlugin } from '@/apis/plugins/cors.js'
+import { swaggerPlugin } from '@/apis/plugins/swagger.js'
+import { registerRoutes } from '@/apis/router.js'
 
 // ── 主启动函数 ──
 

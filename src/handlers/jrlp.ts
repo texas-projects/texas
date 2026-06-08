@@ -2,11 +2,12 @@
  * 今日老婆 Bot 处理器 —— 响应群聊抽取指令。
  */
 
-import type { Context } from '../core/framework/context.js'
-import { Component, OnRegex, MessageScope } from '../core/framework/decorators.js'
-import { logger } from '../core/logging/setup.js'
-import { MessageBuilder } from '../core/protocol/segment.js'
-import type { JrlpService } from '../services/jrlp.js'
+import { logger } from '@logger'
+
+import type { Context } from '@/core/framework/context.js'
+import { Component, OnRegex, MessageScope } from '@/core/framework/decorators.js'
+import { MessageBuilder } from '@/core/protocol/segment.js'
+import type { JrlpService } from '@/services/jrlp.js'
 
 // QQ 头像 URL 模板
 const AVATAR_URL = 'https://q1.qlogo.cn/g?b=qq&nk={qq}&s=640'
@@ -24,7 +25,7 @@ class JrlpHandler {
   /** 随机抽取今日群老婆。 */
 
   async drawWife(ctx: Context): Promise<boolean> {
-    const { JrlpService: JrlpSvc } = await import('../services/jrlp.js')
+    const { JrlpService: JrlpSvc } = await import('@/services/jrlp.js')
 
     if (!ctx.hasService(JrlpSvc) || ctx.groupId === undefined) {
       return false

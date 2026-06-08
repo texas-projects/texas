@@ -2,10 +2,10 @@
  * 任务队列 API 端点 —— 查询定时任务与消息队列状态，SSE 实时推送。
  */
 
+import { getLogger } from '@logger'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import { getLogger } from '../core/logging/setup.js'
-import { ok, fail } from '../core/utils/response.js'
+import { ok, fail } from '@/core/utils/response.js'
 
 const log = getLogger('queue')
 

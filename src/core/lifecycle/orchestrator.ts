@@ -2,7 +2,7 @@
  * 生命周期编排器 —— 拓扑排序 + 按序启动/关闭业务模块。
  */
 
-import { logger } from '../logging/setup.js'
+import { logger } from '@logger'
 
 import type { ShutdownEntry, StartupEntry } from './registry.js'
 

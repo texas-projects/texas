@@ -4,9 +4,6 @@
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
-import { NotFoundError } from '../errors.js'
-import { ok, fail } from '../utils/response.js'
-
 import type { LLMService } from './main.js'
 import {
   CreateModelSchema,
@@ -18,6 +15,9 @@ import {
   type UpdateModelData,
   type UpdateProviderData,
 } from './schemas.js'
+
+import { NotFoundError } from '@/core/errors.js'
+import { ok, fail } from '@/core/utils/response.js'
 
 // ── 内部工具 ──
 

@@ -2,16 +2,17 @@
  * 用户群签到业务逻辑服务 —— 每日签到、连续天数、排行榜、统计。
  */
 
+import { logger, type Logger } from '@logger'
+
 import { Prisma } from '#prisma/main'
 import type { CheckinRecord } from '#prisma/main'
 
-import type { CacheClient } from '../core/cache/client.js'
-import { checkinStatsKey } from '../core/cache/key-registry.js'
-import type { MainPrismaClient } from '../core/db/client.js'
-import { isPrismaKnownError } from '../core/db/utils.js'
-import { Startup } from '../core/lifecycle/registry.js'
-import { logger, type Logger } from '../core/logging/setup.js'
-import { SHANGHAI_TZ } from '../core/utils/helpers.js'
+import type { CacheClient } from '@/core/cache/client.js'
+import { checkinStatsKey } from '@/core/cache/key-registry.js'
+import type { MainPrismaClient } from '@/core/db/client.js'
+import { isPrismaKnownError } from '@/core/db/utils.js'
+import { Startup } from '@/core/lifecycle/registry.js'
+import { SHANGHAI_TZ } from '@/core/utils/helpers.js'
 
 export type { CheckinRecord }
 

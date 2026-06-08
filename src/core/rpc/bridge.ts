@@ -10,10 +10,10 @@ import { randomUUID } from 'node:crypto'
 
 import type { Redis } from 'ioredis'
 
-import { createRedis } from '../utils/redis-factory.js'
-
 import { rpcRequestQueueKey, rpcResponseChannelKey } from './keys.js'
 import type { RPCRequest, RPCResponse } from './models.js'
+
+import { createRedis } from '@/core/utils/redis-factory.js'
 
 /** RPC 超时裕量（毫秒）：覆盖网络延迟 + 主进程调度耗时。 */
 const TIMEOUT_MARGIN_MS = 5_000

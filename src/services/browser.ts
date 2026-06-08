@@ -5,4 +5,4 @@
  * 此处仅作为 services/ 层的统一入口重导出，供其他服务依赖。
  */
 
-export { browserService, BrowserService } from '../core/browser/service.js'
+export { browserService, BrowserService } from '@/core/browser/service.js'

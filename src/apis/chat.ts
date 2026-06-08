@@ -2,11 +2,11 @@
  * 聊天记录 REST API 路由 —— /api/chat。
  */
 
+import { getLogger } from '@logger'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import { getLogger } from '../core/logging/setup.js'
-import type { ServiceRegistry } from '../core/registries/service-registry.js'
-import { ok, fail } from '../core/utils/response.js'
+import type { ServiceRegistry } from '@/core/registries/service-registry.js'
+import { ok, fail } from '@/core/utils/response.js'
 
 const log = getLogger('chat')
 
@@ -42,7 +42,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       }>,
       reply: FastifyReply,
     ) => {
-      const { ChatHistoryService } = await import('../core/chat/main.js')
+      const { ChatHistoryService } = await import('@/core/chat/main.js')
       const registry = getServiceRegistry(app)
 
       const svc = registry.getTyped(ChatHistoryService, 'chat_service')
@@ -72,7 +72,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       }>,
       reply: FastifyReply,
     ) => {
-      const { ChatHistoryService } = await import('../core/chat/main.js')
+      const { ChatHistoryService } = await import('@/core/chat/main.js')
       const registry = getServiceRegistry(app)
 
       const svc = registry.getTyped(ChatHistoryService, 'chat_service')
@@ -98,7 +98,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       }>,
       reply: FastifyReply,
     ) => {
-      const { ChatHistoryService } = await import('../core/chat/main.js')
+      const { ChatHistoryService } = await import('@/core/chat/main.js')
       const registry = getServiceRegistry(app)
 
       const svc = registry.getTyped(ChatHistoryService, 'chat_service')
@@ -121,7 +121,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       req: FastifyRequest<{ Querystring: { page?: string; pageSize?: string } }>,
       reply: FastifyReply,
     ) => {
-      const { ArchiveService } = await import('../core/chat/archive.js')
+      const { ArchiveService } = await import('@/core/chat/archive.js')
       const registry = getServiceRegistry(app)
 
       const svc = registry.getTyped(ArchiveService, 'archive_service')
@@ -176,7 +176,7 @@ export async function chatRoutes(app: FastifyInstance): Promise<void> {
       }
       const limit = req.query.limit ? parseInt(req.query.limit, 10) : 50
 
-      const { ArchiveService } = await import('../core/chat/archive.js')
+      const { ArchiveService } = await import('@/core/chat/archive.js')
       const registry = getServiceRegistry(app)
       const svc = registry.getTyped(ArchiveService, 'archive_service')
 

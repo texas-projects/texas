@@ -2,9 +2,8 @@
  * API 路由注册器 —— 统一注册所有路由插件（业务 API + 核心领域 API）。
  */
 
+import { getLogger } from '@logger'
 import type { FastifyInstance } from 'fastify'
-
-import { getLogger } from '../core/logging/setup.js'
 
 import { botRoutes } from './bot.js'
 import { chatRoutes } from './chat.js'
@@ -45,7 +44,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // LLM 路由
   try {
-    const { llmRoutes } = await import('../core/llm/api.js')
+    const { llmRoutes } = await import('@/core/llm/api.js')
     await app.register(
       async (fastify) => {
         await llmRoutes(fastify)
@@ -58,7 +57,7 @@ export async function registerRoutes(app: FastifyInstance): Promise<void> {
 
   // 人员管理路由
   try {
-    const { registerPersonnelRoutes } = await import('../core/personnel/api.js')
+    const { registerPersonnelRoutes } = await import('@/core/personnel/api.js')
     await registerPersonnelRoutes(app)
   } catch (err) {
     log.warn({ err }, '人员管理路由注册失败')

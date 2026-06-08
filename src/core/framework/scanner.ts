@@ -6,7 +6,7 @@ import { readdir } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-import { getLogger } from '../logging/setup.js'
+import { getLogger } from '@logger'
 
 const log = getLogger('scanner')
 

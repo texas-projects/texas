@@ -2,14 +2,15 @@
  * 聊天记录归档服务与 BullMQ 任务 —— 编排冷数据归档流程（发现分区 → 导出 → 上传 S3 → 清理）。
  */
 
-import type { ArchiveStatus } from '#prisma/main'
+import { logger, type Logger } from '@logger'
 
-import type { ChatPrismaClient, MainPrismaClient } from '../db/client.js'
-import { logger, type Logger } from '../logging/setup.js'
+import type { ArchiveStatus } from '#prisma/main'
 
 import { ArchiveExporter, PARTITION_NAME_RE } from './exporter.js'
 import type { ArchiveExporterSettings } from './exporter.js'
 import { ArchiveS3, type S3Settings } from './s3.js'
+
+import type { ChatPrismaClient, MainPrismaClient } from '@/core/db/client.js'
 
 /** 归档单个分区的执行结果。 */
 export interface PartitionArchiveResult {

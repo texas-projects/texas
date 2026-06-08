@@ -2,10 +2,10 @@
  * Bot 信息 API 端点 —— 获取和修改 Bot 登录信息。
  */
 
+import { getLogger } from '@logger'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import { getLogger } from '../core/logging/setup.js'
-import { ok, fail } from '../core/utils/response.js'
+import { ok, fail } from '@/core/utils/response.js'
 
 const log = getLogger('bot')
 

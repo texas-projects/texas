@@ -2,7 +2,7 @@
  * 用户管理只读查询服务 —— 分页列表、详情查询，SRP 分离自 PersonnelService。
  */
 
-import type { MainPrismaClient } from '../db/client.js'
+import type { MainPrismaClient } from '@/core/db/client.js'
 
 /** 分页结果。 */
 export interface PaginatedResult<T> {

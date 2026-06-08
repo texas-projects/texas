@@ -2,9 +2,9 @@
  * SessionInterceptor —— 会话消息路由拦截器（存根，会话系统在 Phase 4 实现）。
  */
 
-import type { Context } from '../context.js'
-import type { HandlerInterceptor } from '../interceptor.js'
-import type { ResolvedHandler } from '../mapping.js'
+import type { Context } from '@/core/framework/context.js'
+import type { HandlerInterceptor } from '@/core/framework/interceptor.js'
+import type { ResolvedHandler } from '@/core/framework/mapping.js'
 
 /**
  * 会话拦截器：在 handler 执行前检查是否有活跃会话并路由消息。

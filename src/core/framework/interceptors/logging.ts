@@ -2,10 +2,11 @@
  * LoggingInterceptor —— 记录事件处理详情。
  */
 
-import { logger, type Logger } from '../../logging/setup.js'
-import type { Context } from '../context.js'
-import type { HandlerInterceptor } from '../interceptor.js'
-import type { ResolvedHandler } from '../mapping.js'
+import { logger, type Logger } from '@logger'
+
+import type { Context } from '@/core/framework/context.js'
+import type { HandlerInterceptor } from '@/core/framework/interceptor.js'
+import type { ResolvedHandler } from '@/core/framework/mapping.js'
 
 const CTX_KEY_START_TIME = '_logging_start_time'
 

@@ -2,9 +2,9 @@
  * Markdown 渲染器服务 —— 创建 MarkdownRenderer 实例并注册生命周期。
  */
 
-import type { BrowserService } from '../core/browser/service.js'
-import { Startup } from '../core/lifecycle/registry.js'
-import { MarkdownRenderer } from '../core/utils/md2img.js'
+import type { BrowserService } from '@/core/browser/service.js'
+import { Startup } from '@/core/lifecycle/registry.js'
+import { MarkdownRenderer } from '@/core/utils/md2img.js'
 
 export { MarkdownRenderer }
 

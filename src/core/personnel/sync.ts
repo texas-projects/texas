@@ -5,9 +5,9 @@
  * 所有触发入口（WS 连接、API 手动触发、内置定时调度）统一调用 requestSync()。
  */
 
-import type { BotAPI } from '../protocol/api.js'
-
 import type { PersonnelService } from './main.js'
+
+import type { BotAPI } from '@/core/protocol/api.js'
 
 /** 同步触发来源。 */
 export type SyncSource = 'ws_connect' | 'manual' | 'scheduled'

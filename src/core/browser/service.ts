@@ -5,7 +5,7 @@
 import { chromium } from 'playwright'
 import type { Browser, BrowserContext, Route } from 'playwright'
 
-import { Shutdown, Startup } from '../lifecycle/registry.js'
+import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
 
 // ── 启动参数（容器 / CI 环境兼容）──
 

@@ -4,9 +4,6 @@
  * 负责会话生命周期管理、消息路由、互斥检查和超时管理。
  */
 
-import type { CacheClient } from '../../cache/client.js'
-import type { Context } from '../context.js'
-
 import { InteractiveSession } from './base.js'
 import type { SessionData } from './base.js'
 import { CANCEL_COMMANDS } from './commands.js'
@@ -15,6 +12,9 @@ import { TimeoutMode } from './enums.js'
 import * as sessionKeys from './keys.js'
 import { resolveTimeout } from './timeout.js'
 import type { TimeoutConfig } from './timeout.js'
+
+import type { CacheClient } from '@/core/cache/client.js'
+import type { Context } from '@/core/framework/context.js'
 
 /**
  * 全局会话管理器 —— 管理所有交互式会话的生命周期。

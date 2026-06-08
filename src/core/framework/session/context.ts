@@ -2,11 +2,11 @@
  * 会话上下文 —— 封装会话内的交互信息（TypeScript 移植自 context.py）。
  */
 
-import type { MessageSegment } from '../../protocol/models/segments.js'
-import type { Context } from '../context.js'
-
 import type { InteractiveSession, SessionData } from './base.js'
 import { CONFIRM_STATE_PREFIX } from './commands.js'
+
+import type { Context } from '@/core/framework/context.js'
+import type { MessageSegment } from '@/core/protocol/models/segments.js'
 
 /** 确认状态配置。 */
 export interface ConfirmConfig {

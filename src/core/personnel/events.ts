@@ -5,11 +5,11 @@
  * 将增量变更持久化到数据库并维护 Redis 缓存。
  */
 
-import type { CacheClient } from '../cache/client.js'
-import { userRelationKey } from '../cache/key-registry.js'
-import type { MainPrismaClient } from '../db/client.js'
-
 import { computeRelation } from './main.js'
+
+import type { CacheClient } from '@/core/cache/client.js'
+import { userRelationKey } from '@/core/cache/key-registry.js'
+import type { MainPrismaClient } from '@/core/db/client.js'
 
 /**
  * 处理 Bot 实时增量事件，维护用户与群成员关系的即时状态。

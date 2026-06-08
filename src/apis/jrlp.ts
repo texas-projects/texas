@@ -2,12 +2,12 @@
  * 今日老婆管理 REST API —— /api/jrlp。
  */
 
+import { getLogger } from '@logger'
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import { getLogger } from '../core/logging/setup.js'
-import type { ServiceRegistry } from '../core/registries/service-registry.js'
-import { ok, fail } from '../core/utils/response.js'
-import type { JrlpService } from '../services/jrlp.js'
+import type { ServiceRegistry } from '@/core/registries/service-registry.js'
+import { ok, fail } from '@/core/utils/response.js'
+import type { JrlpService } from '@/services/jrlp.js'
 
 const log = getLogger('jrlp')
 
@@ -17,7 +17,7 @@ function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
 }
 
 async function getJrlpSvc(app: FastifyInstance): Promise<JrlpService> {
-  const { JrlpService: Cls } = await import('../services/jrlp.js')
+  const { JrlpService: Cls } = await import('@/services/jrlp.js')
   const registry = getServiceRegistry(app)
 
   return registry.getTyped(Cls, 'jrlp_service')

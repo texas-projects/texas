@@ -2,10 +2,10 @@
  * 事件上下文 —— 封装事件、Bot API 及便捷方法（TypeScript 移植自 context.py）。
  */
 
-import type { BotAPI } from '../protocol/api.js'
-import type { AnyOneBotEvent, GroupMessageEvent } from '../protocol/models/events.js'
-import type { MessageSegment } from '../protocol/models/segments.js'
-import { extractPlaintext } from '../protocol/utils.js'
+import type { BotAPI } from '@/core/protocol/api.js'
+import type { AnyOneBotEvent, GroupMessageEvent } from '@/core/protocol/models/events.js'
+import type { MessageSegment } from '@/core/protocol/models/segments.js'
+import { extractPlaintext } from '@/core/protocol/utils.js'
 
 /** 由 ctx.finish() 抛出，用于中止后续处理器的执行。 */
 export class FinishError extends Error {

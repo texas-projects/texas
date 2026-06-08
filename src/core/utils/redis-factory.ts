@@ -1,8 +1,7 @@
 /** ioredis 实例工厂。 */
 
+import { logger } from '@logger'
 import { Redis, type RedisOptions } from 'ioredis'
-
-import { logger } from '../logging/setup.js'
 
 /** 创建一个新的 ioredis Redis 实例，并将 error 事件路由到 Pino。 */
 export function createRedis(url: string, opts?: RedisOptions): Redis {

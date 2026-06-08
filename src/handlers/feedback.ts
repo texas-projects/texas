@@ -4,10 +4,11 @@
  * 注意：交互式多轮会话将在 Phase 4 实现，当前版本仅支持简单模式。
  */
 
-import type { Context } from '../core/framework/context.js'
-import { Component, OnCommand, Permission } from '../core/framework/decorators.js'
-import { logger } from '../core/logging/setup.js'
-import type { FeedbackService } from '../services/feedback.js'
+import { logger } from '@logger'
+
+import type { Context } from '@/core/framework/context.js'
+import { Component, OnCommand, Permission } from '@/core/framework/decorators.js'
+import type { FeedbackService } from '@/services/feedback.js'
 
 type FeedbackType = 'bug' | 'suggestion' | 'complaint'
 type FeedbackSource = 'group' | 'private'
@@ -36,7 +37,7 @@ class FeedbackHandler {
   /** 提交反馈命令。有参数时直接提交，无参数时提示用法。 */
 
   async submitFeedback(ctx: Context): Promise<boolean> {
-    const { FeedbackService: FeedbackSvc } = await import('../services/feedback.js')
+    const { FeedbackService: FeedbackSvc } = await import('@/services/feedback.js')
 
     if (!ctx.hasService(FeedbackSvc)) {
       return false
@@ -78,7 +79,7 @@ class FeedbackHandler {
   /** 查询用户最近 5 条反馈。 */
 
   async myFeedbacks(ctx: Context): Promise<boolean> {
-    const { FeedbackService: FeedbackSvc } = await import('../services/feedback.js')
+    const { FeedbackService: FeedbackSvc } = await import('@/services/feedback.js')
 
     if (!ctx.hasService(FeedbackSvc)) {
       return false

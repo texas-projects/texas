@@ -2,14 +2,15 @@
  * EventDispatcher —— 统一事件分发（类似 Spring DispatcherServlet）。
  */
 
-import { logger } from '../logging/setup.js'
-import type { BotAPI } from '../protocol/api.js'
-import type { AnyOneBotEvent } from '../protocol/models/events.js'
+import { logger } from '@logger'
 
 import { Context, FinishError } from './context.js'
 import type { HandlerInterceptor } from './interceptor.js'
 import type { CompositeHandlerMapping, ResolvedHandler } from './mapping.js'
 import type { FeatureChecker } from './ports.js'
+
+import type { BotAPI } from '@/core/protocol/api.js'
+import type { AnyOneBotEvent } from '@/core/protocol/models/events.js'
 
 /**
  * 接收已解析的事件，通过映射解析处理器，并运行拦截器链。

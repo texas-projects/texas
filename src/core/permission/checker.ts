@@ -9,13 +9,13 @@
  * 5. 私聊 → 功能允许检查
  */
 
-import type { Context } from '../framework/context.js'
-import { Permission } from '../framework/decorators.js'
-import type { FeatureChecker } from '../framework/ports.js'
-import type { PersonnelService } from '../personnel/main.js'
-import type { PermissionRegistry } from '../registries/permission-registry.js'
-
 import type { FeaturePermissionService } from './main.js'
+
+import type { Context } from '@/core/framework/context.js'
+import { Permission } from '@/core/framework/decorators.js'
+import type { FeatureChecker } from '@/core/framework/ports.js'
+import type { PersonnelService } from '@/core/personnel/main.js'
+import type { PermissionRegistry } from '@/core/registries/permission-registry.js'
 
 /** 处理器方法元数据扩展（从 mapping 层获取）。 */
 interface HandlerMethod {

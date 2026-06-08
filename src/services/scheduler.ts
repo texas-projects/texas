@@ -2,11 +2,11 @@
  * BullMQ 调度器 —— 注册所有定时任务到队列（替代 Python 侧的 APScheduler）。
  */
 
+import { getLogger } from '@logger'
 import type { Queue } from 'bullmq'
 
-import { Startup, Shutdown } from '../core/lifecycle/registry.js'
-import { getLogger } from '../core/logging/setup.js'
-import { QUEUE_NAMES } from '../core/tasks/broker.js'
+import { Startup, Shutdown } from '@/core/lifecycle/registry.js'
+import { QUEUE_NAMES } from '@/core/tasks/broker.js'
 
 const log = getLogger('scheduler')
 

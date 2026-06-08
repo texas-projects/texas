@@ -2,9 +2,9 @@
  * MetricsInterceptor —— 收集事件处理的 Prometheus 指标（占位实现，Phase 6 接入 prom-client）。
  */
 
-import type { Context } from '../context.js'
-import type { HandlerInterceptor } from '../interceptor.js'
-import type { ResolvedHandler } from '../mapping.js'
+import type { Context } from '@/core/framework/context.js'
+import type { HandlerInterceptor } from '@/core/framework/interceptor.js'
+import type { ResolvedHandler } from '@/core/framework/mapping.js'
 
 const CTX_KEY_START_TIME = '_metrics_start_time'
 

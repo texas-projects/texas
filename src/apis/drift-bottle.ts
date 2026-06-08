@@ -4,9 +4,9 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import type { ServiceRegistry } from '../core/registries/service-registry.js'
-import { ok, fail } from '../core/utils/response.js'
-import type { DriftBottleService, PoolInfo } from '../services/drift-bottle.js'
+import type { ServiceRegistry } from '@/core/registries/service-registry.js'
+import { ok, fail } from '@/core/utils/response.js'
+import type { DriftBottleService, PoolInfo } from '@/services/drift-bottle.js'
 
 function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
   const state = (app as unknown as { state: { serviceRegistry: ServiceRegistry } }).state
@@ -14,7 +14,7 @@ function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
 }
 
 async function getDriftSvc(app: FastifyInstance): Promise<DriftBottleService> {
-  const { DriftBottleService: Cls } = await import('../services/drift-bottle.js')
+  const { DriftBottleService: Cls } = await import('@/services/drift-bottle.js')
   const registry = getServiceRegistry(app)
 
   return registry.getTyped(Cls, 'drift_bottle_service')

@@ -2,11 +2,12 @@
  * 聊天记录业务逻辑 —— 消息持久化、查询、上下文获取。
  */
 
+import { logger, type Logger } from '@logger'
+
 import type { ChatMessage } from '#prisma/chat'
 
-import type { ChatPrismaClient } from '../db/client.js'
-import { Shutdown, Startup } from '../lifecycle/registry.js'
-import { logger, type Logger } from '../logging/setup.js'
+import type { ChatPrismaClient } from '@/core/db/client.js'
+import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
 
 export type { ChatMessage }
 

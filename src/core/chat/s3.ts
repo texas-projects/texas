@@ -2,9 +2,8 @@
  * S3 上传服务 —— 封装 Parquet 文件和 manifest 的 S3 上传操作。
  */
 
+import { logger, type Logger } from '@logger'
 import { Client as MinioClient } from 'minio'
-
-import { logger, type Logger } from '../logging/setup.js'
 
 /** S3 归档配置（从外部注入，对应环境变量）。 */
 export interface S3Settings {

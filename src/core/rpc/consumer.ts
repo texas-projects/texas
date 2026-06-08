@@ -2,14 +2,18 @@
  * 主进程端 RPC 消费者 —— 从 Redis 队列取请求，委托已注册 handler 执行，响应写回 Redis。
  */
 
+import { logger, type Logger } from '@logger'
 import type { Redis } from 'ioredis'
-
-import { logger, type Logger } from '../logging/setup.js'
-import { rpcHandlerExecSeconds, rpcInflight, rpcRegisteredHandlers } from '../monitoring/metrics.js'
-import { createRedis } from '../utils/redis-factory.js'
 
 import { rpcRequestQueueKey, rpcResponseChannelKey } from './keys.js'
 import type { RPCRequest, RPCResponse } from './models.js'
+
+import {
+  rpcHandlerExecSeconds,
+  rpcInflight,
+  rpcRegisteredHandlers,
+} from '@/core/monitoring/metrics.js'
+import { createRedis } from '@/core/utils/redis-factory.js'
 
 /** 自定义 action handler 类型：接收 params dict，返回任意可序列化结果。 */
 export type ActionHandler = (params: Record<string, unknown>) => Promise<unknown>

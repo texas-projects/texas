@@ -4,9 +4,9 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import type { ServiceRegistry } from '../core/registries/service-registry.js'
-import { ok, fail } from '../core/utils/response.js'
-import type { FeedbackService } from '../services/feedback.js'
+import type { ServiceRegistry } from '@/core/registries/service-registry.js'
+import { ok, fail } from '@/core/utils/response.js'
+import type { FeedbackService } from '@/services/feedback.js'
 
 function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
   const state = (app as unknown as { state: { serviceRegistry: ServiceRegistry } }).state
@@ -14,7 +14,7 @@ function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
 }
 
 async function getFeedbackSvc(app: FastifyInstance): Promise<FeedbackService> {
-  const { FeedbackService: Cls } = await import('../services/feedback.js')
+  const { FeedbackService: Cls } = await import('@/services/feedback.js')
   const registry = getServiceRegistry(app)
 
   return registry.getTyped(Cls, 'feedback_service')

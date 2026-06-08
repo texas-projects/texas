@@ -2,11 +2,12 @@
  * 帮助处理器 —— 响应 /help 等指令，返回图片格式的功能帮助。
  */
 
-import type { Context } from '../core/framework/context.js'
-import type { ComponentMeta } from '../core/framework/decorators.js'
-import { Component, OnCommand, MessageScope } from '../core/framework/decorators.js'
-import { getLogger } from '../core/logging/setup.js'
-import type { MarkdownRenderer } from '../core/utils/md2img.js'
+import { getLogger } from '@logger'
+
+import type { Context } from '@/core/framework/context.js'
+import type { ComponentMeta } from '@/core/framework/decorators.js'
+import { Component, OnCommand, MessageScope } from '@/core/framework/decorators.js'
+import type { MarkdownRenderer } from '@/core/utils/md2img.js'
 
 const log = getLogger('help')
 
@@ -62,7 +63,7 @@ function buildListMarkdown(categories: HelpCategory[], page: number, totalPages:
 
 /** 降级处理：直接发送纯文本功能列表。 */
 async function fallbackText(ctx: Context): Promise<boolean> {
-  const { componentRegistry } = await import('../core/framework/decorators.js')
+  const { componentRegistry } = await import('@/core/framework/decorators.js')
   const lines: string[] = ['可用功能列表：']
   for (const meta of componentRegistry.values()) {
     if (!meta.system) {
@@ -81,7 +82,7 @@ async function renderAndSend(
   errorLabel: string,
 ): Promise<void> {
   try {
-    const { Seg } = await import('../core/protocol/segment.js')
+    const { Seg } = await import('@/core/protocol/segment.js')
     const buf = await renderer.render(md, { width: RENDER_WIDTH })
     const b64 = `base64://${buf.toString('base64')}`
     await ctx.reply([Seg.image(b64)])
@@ -169,7 +170,7 @@ class HelpHandler {
   /** 处理 /help 指令。 */
 
   async showHelp(ctx: Context): Promise<boolean> {
-    const { MarkdownRenderer } = await import('../core/utils/md2img.js')
+    const { MarkdownRenderer } = await import('@/core/utils/md2img.js')
 
     if (!ctx.hasService(MarkdownRenderer)) {
       return fallbackText(ctx)
@@ -179,7 +180,7 @@ class HelpHandler {
     const renderer = ctx.getService(MarkdownRenderer as any) as unknown as MarkdownRenderer
     const arg = ctx.getArgStr().trim()
 
-    const { componentRegistry } = await import('../core/framework/decorators.js')
+    const { componentRegistry } = await import('@/core/framework/decorators.js')
     const allFeatures = [...componentRegistry.values()].filter((c) => !c.system)
 
     if (!arg || /^\d+$/u.test(arg)) {

@@ -2,11 +2,11 @@
  * 每日点赞 BullMQ 处理器 —— 由 BullMQ Worker 触发，通过 Redis RPC 调用主进程执行点赞。
  */
 
+import { getLogger } from '@logger'
 import type { Job } from 'bullmq'
 
-import { loadConfig } from '../core/config.js'
-import { getLogger } from '../core/logging/setup.js'
-import { getRpcBridge } from '../core/rpc/bridge.js'
+import { loadConfig } from '@/core/config.js'
+import { getRpcBridge } from '@/core/rpc/bridge.js'
 
 const log = getLogger('dailyLike')
 

@@ -4,8 +4,8 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import { componentRegistry, handlerRegistry } from '../core/framework/decorators.js'
-import { ok } from '../core/utils/response.js'
+import { componentRegistry, handlerRegistry } from '@/core/framework/decorators.js'
+import { ok } from '@/core/utils/response.js'
 
 /**
  * 处理器管理路由插件。

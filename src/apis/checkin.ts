@@ -4,9 +4,9 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import type { ServiceRegistry } from '../core/registries/service-registry.js'
-import { ok } from '../core/utils/response.js'
-import type { CheckinService, LeaderEntry, DayCount } from '../services/checkin.js'
+import type { ServiceRegistry } from '@/core/registries/service-registry.js'
+import { ok } from '@/core/utils/response.js'
+import type { CheckinService, LeaderEntry, DayCount } from '@/services/checkin.js'
 
 function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
   const state = (app as unknown as { state: { serviceRegistry: ServiceRegistry } }).state
@@ -14,7 +14,7 @@ function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
 }
 
 async function getCheckinSvc(app: FastifyInstance): Promise<CheckinService> {
-  const { CheckinService: Cls } = await import('../services/checkin.js')
+  const { CheckinService: Cls } = await import('@/services/checkin.js')
   const registry = getServiceRegistry(app)
 
   return registry.getTyped(Cls, 'user_checkin_service')

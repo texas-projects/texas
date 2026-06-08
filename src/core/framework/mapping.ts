@@ -2,10 +2,10 @@
  * HandlerMapping —— 将事件路由到处理器方法（TypeScript 移植自 mapping.py）。
  */
 
-import type { AnyOneBotEvent } from '../protocol/models/events.js'
-import { extractPlaintext } from '../protocol/utils.js'
-
 import type { HandlerMeta } from './decorators.js'
+
+import type { AnyOneBotEvent } from '@/core/protocol/models/events.js'
+import { extractPlaintext } from '@/core/protocol/utils.js'
 
 // ── 数据结构 ──
 

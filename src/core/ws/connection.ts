@@ -4,8 +4,8 @@
 
 import type { IncomingMessage } from 'node:http'
 
-import type { BotAPI } from '../protocol/api.js'
-import type { AnyOneBotEvent } from '../protocol/models/events.js'
+import type { BotAPI } from '@/core/protocol/api.js'
+import type { AnyOneBotEvent } from '@/core/protocol/models/events.js'
 
 /** 原始 WebSocket 消息的最小结构，用于路由判断。 */
 interface RawWsMessage {

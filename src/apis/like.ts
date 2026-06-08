@@ -4,9 +4,9 @@
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
-import type { ServiceRegistry } from '../core/registries/service-registry.js'
-import { ok } from '../core/utils/response.js'
-import type { LikeService } from '../services/like.js'
+import type { ServiceRegistry } from '@/core/registries/service-registry.js'
+import { ok } from '@/core/utils/response.js'
+import type { LikeService } from '@/services/like.js'
 
 function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
   const state = (app as unknown as { state: { serviceRegistry: ServiceRegistry } }).state
@@ -14,7 +14,7 @@ function getServiceRegistry(app: FastifyInstance): ServiceRegistry {
 }
 
 async function getLikeSvc(app: FastifyInstance): Promise<LikeService> {
-  const { LikeService: Cls } = await import('../services/like.js')
+  const { LikeService: Cls } = await import('@/services/like.js')
   const registry = getServiceRegistry(app)
 
   return registry.getTyped(Cls, 'like_service')

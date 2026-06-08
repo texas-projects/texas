@@ -2,9 +2,9 @@
  * 点赞 Bot 处理器 —— 响应 /like 或 /点赞 命令。
  */
 
-import type { Context } from '../core/framework/context.js'
-import { Component, OnCommand, MessageScope, Permission } from '../core/framework/decorators.js'
-import type { LikeService } from '../services/like.js'
+import type { Context } from '@/core/framework/context.js'
+import { Component, OnCommand, MessageScope, Permission } from '@/core/framework/decorators.js'
+import type { LikeService } from '@/services/like.js'
 
 const DEFAULT_LIKE_TIMES = 10
 
@@ -19,7 +19,7 @@ class LikeHandler {
   /** 解析参数并分发到对应子命令。 */
 
   async handle(ctx: Context): Promise<void> {
-    const { LikeService: LikeSvc } = await import('../services/like.js')
+    const { LikeService: LikeSvc } = await import('@/services/like.js')
 
     if (!ctx.hasService(LikeSvc)) {
       return

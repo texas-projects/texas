@@ -2,12 +2,13 @@
  * 用户反馈业务逻辑 —— 反馈创建、查询、状态更新、通知。
  */
 
+import { logger, type Logger } from '@logger'
+
 import type { Prisma, Feedback, FeedbackStatus, FeedbackSource, FeedbackType } from '#prisma/main'
 
-import type { MainPrismaClient } from '../core/db/client.js'
-import { Startup } from '../core/lifecycle/registry.js'
-import { logger, type Logger } from '../core/logging/setup.js'
-import type { BotAPI } from '../core/protocol/api.js'
+import type { MainPrismaClient } from '@/core/db/client.js'
+import { Startup } from '@/core/lifecycle/registry.js'
+import type { BotAPI } from '@/core/protocol/api.js'
 
 export type { Feedback, FeedbackStatus, FeedbackSource, FeedbackType }
 

@@ -5,15 +5,16 @@
  * 均通过 Redis 日期键去重，防止重复打卡。
  */
 
-import type { CacheClient } from '../core/cache/client.js'
-import { checkinDailyKey } from '../core/cache/key-registry.js'
-import type { MainPrismaClient } from '../core/db/client.js'
-import { Startup } from '../core/lifecycle/registry.js'
-import { logger, type Logger } from '../core/logging/setup.js'
-import type { FeaturePermissionService } from '../core/permission/main.js'
-import type { BotAPI } from '../core/protocol/api.js'
-import { SHANGHAI_TZ } from '../core/utils/helpers.js'
-import type { ConnectionManager } from '../core/ws/connection.js'
+import { logger, type Logger } from '@logger'
+
+import type { CacheClient } from '@/core/cache/client.js'
+import { checkinDailyKey } from '@/core/cache/key-registry.js'
+import type { MainPrismaClient } from '@/core/db/client.js'
+import { Startup } from '@/core/lifecycle/registry.js'
+import type { FeaturePermissionService } from '@/core/permission/main.js'
+import type { BotAPI } from '@/core/protocol/api.js'
+import { SHANGHAI_TZ } from '@/core/utils/helpers.js'
+import type { ConnectionManager } from '@/core/ws/connection.js'
 
 // ── 常量 ──
 

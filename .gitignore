@@ -159,3 +159,7 @@ prisma/**/generated/
 junit.xml
 junit-report.xml
 test-results/
+
+# Python 缓存（旧版遗留）
+__pycache__/
+*.pyc

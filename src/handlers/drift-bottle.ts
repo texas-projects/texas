@@ -2,18 +2,19 @@
  * 漂流瓶 Bot 处理器 —— 响应「扔漂流瓶」和「捞漂流瓶」关键词。
  */
 
-import type { Context } from '../core/framework/context.js'
+import { logger } from '@logger'
+
+import type { Context } from '@/core/framework/context.js'
 import {
   Component,
   OnStartsWith,
   OnFullMatch,
   MessageScope,
   Permission,
-} from '../core/framework/decorators.js'
-import { logger } from '../core/logging/setup.js'
-import type { MessageSegment } from '../core/protocol/models/segments.js'
-import { MessageBuilder, Seg } from '../core/protocol/segment.js'
-import type { DriftBottleService } from '../services/drift-bottle.js'
+} from '@/core/framework/decorators.js'
+import type { MessageSegment } from '@/core/protocol/models/segments.js'
+import { MessageBuilder, Seg } from '@/core/protocol/segment.js'
+import type { DriftBottleService } from '@/services/drift-bottle.js'
 
 const TRIGGER_THROW = '扔漂流瓶'
 const TRIGGER_PICK = '捞漂流瓶'
@@ -53,7 +54,7 @@ class DriftBottleHandler {
   /** 处理扔漂流瓶请求。 */
 
   async handleThrow(ctx: Context): Promise<boolean> {
-    const { DriftBottleService: DriftSvc } = await import('../services/drift-bottle.js')
+    const { DriftBottleService: DriftSvc } = await import('@/services/drift-bottle.js')
 
     if (!ctx.hasService(DriftSvc) || ctx.groupId === undefined) {
       return false
@@ -98,7 +99,7 @@ class DriftBottleHandler {
   /** 处理捞漂流瓶请求。 */
 
   async handlePick(ctx: Context): Promise<boolean> {
-    const { DriftBottleService: DriftSvc } = await import('../services/drift-bottle.js')
+    const { DriftBottleService: DriftSvc } = await import('@/services/drift-bottle.js')
 
     if (!ctx.hasService(DriftSvc) || ctx.groupId === undefined) {
       return false

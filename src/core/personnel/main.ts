@@ -5,9 +5,9 @@
  * 增量事件处理已迁移至 PersonnelEventService（events.ts）。
  */
 
-import type { CacheClient } from '../cache/client.js'
-import { adminSetKey, userRelationKey, USER_RELATION_GLOB } from '../cache/key-registry.js'
-import type { MainPrismaClient } from '../db/client.js'
+import type { CacheClient } from '@/core/cache/client.js'
+import { adminSetKey, userRelationKey, USER_RELATION_GLOB } from '@/core/cache/key-registry.js'
+import type { MainPrismaClient } from '@/core/db/client.js'
 
 /** 用户关系等级。 */
 export type UserRelation = 'stranger' | 'group_member' | 'friend' | 'admin'

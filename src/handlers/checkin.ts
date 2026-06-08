@@ -2,17 +2,18 @@
  * 用户群签到 Bot 处理器 —— 响应「签到」关键词或「/签到」命令。
  */
 
-import type { Context } from '../core/framework/context.js'
+import { logger } from '@logger'
+
+import type { Context } from '@/core/framework/context.js'
 import {
   Component,
   OnCommand,
   OnKeyword,
   MessageScope,
   Permission,
-} from '../core/framework/decorators.js'
-import { logger } from '../core/logging/setup.js'
-import { MessageBuilder } from '../core/protocol/segment.js'
-import type { CheckinService } from '../services/checkin.js'
+} from '@/core/framework/decorators.js'
+import { MessageBuilder } from '@/core/protocol/segment.js'
+import type { CheckinService } from '@/services/checkin.js'
 
 // ── 上海时区辅助 ──
 function getTodayShanghai(): Date {
@@ -27,7 +28,7 @@ class CheckinHandler {
   /** 处理用户签到请求，回复排名和连续/累计天数。 */
 
   async handleCheckin(ctx: Context): Promise<boolean> {
-    const { CheckinService: CheckinSvc } = await import('../services/checkin.js')
+    const { CheckinService: CheckinSvc } = await import('@/services/checkin.js')
 
     if (!ctx.hasService(CheckinSvc) || ctx.groupId === undefined) {
       return false
