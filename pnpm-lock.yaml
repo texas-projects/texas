@@ -45,8 +45,8 @@ importers:
         specifier: ^5.8.5
         version: 5.8.5
       ioredis:
-        specifier: ^5.11.0
-        version: 5.11.0(supports-color@5.5.0)
+        specifier: ^5.11.1
+        version: 5.11.1
       langchain:
         specifier: ^1.4.4
         version: 1.4.4(@langchain/core@1.1.48(@opentelemetry/api@1.9.1)(openai@6.42.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0))(@opentelemetry/api@1.9.1)(openai@6.42.0(ws@8.21.0)(zod@4.4.3))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(vue@3.5.35(typescript@6.0.3))(ws@8.21.0)
@@ -3467,8 +3467,8 @@ packages:
     resolution: {integrity: sha512-HuEDBTI70aYdx1v6U97SbNx9F1+svQKBDo30o0b9fw055LMepzpOOd0Ccg9Q6tbqmBSJaMuY0fB7yw9/vjBYCA==}
     engines: {node: '>=12.22.0'}
 
-  ioredis@5.11.0:
-    resolution: {integrity: sha512-EZBErytyVovD8f6pDfG3Kb37N6Y3lmDA9NNj+4+IP13CzzHGeX+OyeRM2Um13khRzoBSzzL+5lVnCX8V2RLeMg==}
+  ioredis@5.11.1:
+    resolution: {integrity: sha512-ehuGcf94bQXhfagULNXrJdfnWO38v070jxSx/qE87Kjzmu2fU7ro5EFAb+OPituLqgfyuQaym5DlrNydW2sJ9A==}
     engines: {node: '>=12.22.0'}
 
   ipaddr.js@2.4.0:
@@ -3706,6 +3706,26 @@ packages:
 
   langsmith@0.7.4:
     resolution: {integrity: sha512-EGYCw85etSarYazeTgj8DICVIFg+26gsVZ0zq8V7kjIb59huURJpZZJqVFkvRpZFxmfyYrpIhtk2qtHgGR8K+w==}
+    peerDependencies:
+      '@opentelemetry/api': '*'
+      '@opentelemetry/exporter-trace-otlp-proto': '*'
+      '@opentelemetry/sdk-trace-base': '*'
+      openai: '*'
+      ws: '>=7'
+    peerDependenciesMeta:
+      '@opentelemetry/api':
+        optional: true
+      '@opentelemetry/exporter-trace-otlp-proto':
+        optional: true
+      '@opentelemetry/sdk-trace-base':
+        optional: true
+      openai:
+        optional: true
+      ws:
+        optional: true
+
+  langsmith@0.7.5:
+    resolution: {integrity: sha512-OeD6+yKtWwy6sAboq25kD5DICzYv7j2KgtV2n4LsJ8nU2LpEdt1UwbjA6BON/zTggmS/YjV2TtLTHd7VEJhtEA==}
     peerDependencies:
       '@opentelemetry/api': '*'
       '@opentelemetry/exporter-trace-otlp-proto': '*'
@@ -6303,7 +6323,7 @@ snapshots:
       '@cfworker/json-schema': 4.1.1
       '@standard-schema/spec': 1.1.0
       js-tiktoken: 1.0.21
-      langsmith: 0.7.4(@opentelemetry/api@1.9.1)(openai@6.42.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)
+      langsmith: 0.7.5(@opentelemetry/api@1.9.1)(openai@6.42.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0)
       mustache: 4.2.0
       p-queue: 6.6.2
       zod: 4.4.3
@@ -8778,7 +8798,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  ioredis@5.11.0(supports-color@5.5.0):
+  ioredis@5.11.1:
     dependencies:
       '@ioredis/commands': 1.10.0
       cluster-key-slot: 1.1.1
@@ -9003,6 +9023,14 @@ snapshots:
       - zod-to-json-schema
 
   langsmith@0.7.4(@opentelemetry/api@1.9.1)(openai@6.42.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0):
+    dependencies:
+      p-queue: 6.6.2
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.1
+      openai: 6.42.0(ws@8.21.0)(zod@4.4.3)
+      ws: 8.21.0
+
+  langsmith@0.7.5(@opentelemetry/api@1.9.1)(openai@6.42.0(ws@8.21.0)(zod@4.4.3))(ws@8.21.0):
     dependencies:
       p-queue: 6.6.2
     optionalDependencies:

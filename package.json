@@ -53,7 +53,7 @@
     "@sinclair/typebox": "^0.34.49",
     "bullmq": "^5.78.0",
     "fastify": "^5.8.5",
-    "ioredis": "^5.11.0",
+    "ioredis": "^5.11.1",
     "langchain": "^1.4.4",
     "minio": "^8.0.7",
     "parquetjs-lite": "^0.8.7",
