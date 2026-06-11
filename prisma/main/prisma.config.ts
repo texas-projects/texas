@@ -1,5 +1,5 @@
-import { defineConfig } from 'prisma/config'
 import { config } from 'dotenv'
+import { defineConfig } from 'prisma/config'
 
 config()
 
@@ -9,6 +9,6 @@ export default defineConfig({
     path: './migrations',
   },
   datasource: {
-    url: process.env['DATABASE_URL'] ?? '',
+    url: process.env.DATABASE_URL ?? '',
   },
 })
