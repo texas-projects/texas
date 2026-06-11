@@ -147,28 +147,12 @@ const router = createRouter({
     },
     {
       path: '/permissions',
-      redirect: '/permissions/groups',
-    },
-    {
-      path: '/permissions/groups',
-      name: 'permissions-groups',
-      component: () => import('@/views/permission/PermissionGroupsView.vue'),
+      name: 'permissions',
+      component: () => import('@/views/permission/PermissionView.vue'),
       meta: {
-        title: '群聊权限',
+        title: '权限管理',
         icon: 'mdi-shield-check',
-        subtitle: '管理各群对功能的启用/禁用状态',
-        panel: '用户与聊天',
-        section: '权限管理',
-      },
-    },
-    {
-      path: '/permissions/private',
-      name: 'permissions-private',
-      component: () => import('@/views/permission/PermissionPrivateView.vue'),
-      meta: {
-        title: '私聊权限',
-        icon: 'mdi-account-lock',
-        subtitle: '管理私聊功能的黑名单/白名单用户',
+        subtitle: '管理各群/用户的功能权限配置',
         panel: '用户与聊天',
         section: '权限管理',
       },
@@ -252,7 +236,7 @@ const router = createRouter({
     {
       path: '/settings',
       name: 'settings',
-      component: () => import('@/views/system/SettingsView.vue'),
+      component: () => import('@/views/settings/SettingsView.vue'),
       meta: {
         title: '设置',
         icon: 'mdi-cog',

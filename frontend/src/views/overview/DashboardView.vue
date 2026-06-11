@@ -187,7 +187,7 @@ const quickNavs = [
     color: 'deep-purple',
   },
   {
-    to: '/permissions/groups',
+    to: '/permissions',
     icon: 'mdi-shield-check',
     title: '权限管理',
     subtitle: '功能开关控制',

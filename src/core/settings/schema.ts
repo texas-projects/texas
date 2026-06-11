@@ -1,5 +1,5 @@
 /**
- * Settings Schema Map 构建与启动同步。
+ * Settings Schema Map 构建与启动清理。
  */
 
 import type { SettingNodeMeta } from './decorators.js'
@@ -18,6 +18,8 @@ export interface SettingNodeSchema {
   enumOptions?: Record<string, number>
   scope: 'all' | 'group' | 'user'
   owner: string
+  ownerDisplayName: string
+  category: 'permission' | 'config'
 }
 
 // ── 内置系统配置项 ──
@@ -29,6 +31,7 @@ const BUILTIN_NODES: SettingNodeMeta[] = [
     default: true,
     description: 'Bot 总开关（群级）',
     scope: 'group',
+    category: 'permission',
   },
 ]
 
@@ -41,16 +44,18 @@ const BUILTIN_NODES: SettingNodeMeta[] = [
 export function buildSchemaMap(): ReadonlyMap<string, SettingNodeSchema> {
   const map = new Map<string, SettingNodeSchema>()
 
-  // 内置节点（无 owner，标记为 __system__）
+  // 内置节点（无 owner，标记为 __system__，显示名称为「系统」）
   for (const node of BUILTIN_NODES) {
-    map.set(node.key, { ...node, owner: '__system__' })
+    map.set(node.key, { ...node, owner: '__system__', ownerDisplayName: '系统' })
   }
 
-  // 遍历 settingNodeRegistry，关联 Component 名称
+  // 遍历 settingNodeRegistry，关联 Component 名称与显示名称
   for (const [target, nodes] of settingNodeRegistry) {
     const ownerName = findComponentName(target) ?? '__unknown__'
+    const ownerMeta = componentRegistry.get(ownerName)
+    const ownerDisplayName = ownerMeta?.displayName ?? ownerName
     for (const node of nodes) {
-      map.set(node.key, { ...node, owner: ownerName })
+      map.set(node.key, { ...node, owner: ownerName, ownerDisplayName })
     }
   }
 
@@ -68,50 +73,24 @@ function findComponentName(target: Function): string | undefined {
   return undefined
 }
 
-// ── 启动同步 ──
-
-interface SettingsRow {
-  key: string
-}
+// ── 启动清理 ──
 
 /**
- * 启动时同步 Schema Map 与 DB default 行。
- * - Schema 有 DB 无 → INSERT
- * - Schema 无 DB 有 → DELETE（所有 type）
+ * 启动时清理 DB 中已无对应 Schema 的废弃配置行。
  */
-export async function syncDefaults(
+export async function cleanOrphanKeys(
   db: MainPrismaClient,
   schemaMap: ReadonlyMap<string, SettingNodeSchema>,
   logger?: { info: (msg: string) => void },
 ): Promise<void> {
-  // 查询当前 DB 中的 default 行
-  const existing: SettingsRow[] = await db.$queryRaw`
-    SELECT key FROM settings WHERE type = 'default' AND scope = 0
+  const rows: { key: string }[] = await db.$queryRaw`
+    SELECT DISTINCT key FROM settings
   `
-  const existingKeys = new Set(existing.map((r) => r.key))
+  const dbKeys = rows.map((r) => r.key)
   const schemaKeys = new Set(schemaMap.keys())
-
-  // Schema 有、DB 无 → INSERT
-  const toInsert = [...schemaKeys].filter((k) => !existingKeys.has(k))
-  for (const key of toInsert) {
-    const schema = schemaMap.get(key)
-    if (!schema) continue
-    const value = String(schema.default)
-    const valueType = schema.type
-    await db.$executeRaw`
-      INSERT INTO settings (key, type, scope, value, value_type)
-      VALUES (${key}, 'default', 0, ${value}, ${valueType}::settings_value_type)
-      ON CONFLICT DO NOTHING
-    `
-    logger?.info(`[settings] 同步新增 default: ${key} = ${value}`)
-  }
-
-  // Schema 无、DB 有 → DELETE（所有 type 中同 key 的行）
-  const toDelete = [...existingKeys].filter((k) => !schemaKeys.has(k))
-  if (toDelete.length > 0) {
-    await db.$executeRaw`
-      DELETE FROM settings WHERE key = ANY(${toDelete}::text[])
-    `
-    logger?.info(`[settings] 清理废弃配置项: ${toDelete.join(', ')}`)
+  const orphans = dbKeys.filter((k) => !schemaKeys.has(k))
+  if (orphans.length > 0) {
+    await db.$executeRaw`DELETE FROM settings WHERE key = ANY(${orphans}::text[])`
+    logger?.info(`[settings] 清理废弃配置项: ${orphans.join(', ')}`)
   }
 }

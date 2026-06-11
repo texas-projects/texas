@@ -1,14 +1,17 @@
-# Helm chart templates use Go template syntax incompatible with Prettier
+# Helm chart 模板使用 Go 模板语法，与 Prettier 不兼容
 helm/
 
-# Generated files
+# 文档目录
+docs/
+
+# 生成文件
 prisma/*/generated/
 dist/
 frontend/dist/
 
-# Lock files
+# 锁文件
 pnpm-lock.yaml
 frontend/pnpm-lock.yaml
 
-# Shell scripts
+# Shell 脚本
 **/*.sh

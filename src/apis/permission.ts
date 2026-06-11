@@ -40,39 +40,9 @@ export async function permissionRoutes(app: FastifyInstance): Promise<void> {
     },
   )
 
-  // ── 默认值读写 ──
-
-  /** GET /api/settings/default — 读取前缀下所有 default 配置。 */
-  app.get(
-    '/api/settings/default',
-    async (req: FastifyRequest<{ Querystring: { prefix?: string } }>, reply: FastifyReply) => {
-      const svc = getSettings(app)
-      const prefix = req.query.prefix ?? ''
-      const data = await svc.getAll(prefix)
-      await reply.send(ok(data))
-    },
-  )
-
-  /** POST /api/settings/default/:key — 设置 default 配置项值。 */
-  app.post(
-    '/api/settings/default/:key',
-    async (
-      req: FastifyRequest<{ Params: { key: string }; Body: SetValueBody }>,
-      reply: FastifyReply,
-    ) => {
-      const svc = getSettings(app)
-      try {
-        await svc.set(req.params.key, req.body.value, {})
-        await reply.send(ok(null, 'ok'))
-      } catch (err) {
-        await reply.status(400).send(fail(String(err)))
-      }
-    },
-  )
-
   // ── 群级配置 ──
 
-  /** GET /api/settings/groups/:groupId — 读取群级配置（含 default 回退）。 */
+  /** GET /api/settings/groups/:groupId — 读取群级配置（含 Schema 默认值回退）。 */
   app.get(
     '/api/settings/groups/:groupId',
     async (
@@ -122,6 +92,21 @@ export async function permissionRoutes(app: FastifyInstance): Promise<void> {
   )
 
   // ── 用户级配置 ──
+
+  /** GET /api/settings/users/:userId — 读取用户级配置（含 Schema 默认值回退）。 */
+  app.get(
+    '/api/settings/users/:userId',
+    async (
+      req: FastifyRequest<{ Params: { userId: string }; Querystring: { prefix?: string } }>,
+      reply: FastifyReply,
+    ) => {
+      const svc = getSettings(app)
+      const userId = BigInt(req.params.userId)
+      const prefix = req.query.prefix ?? ''
+      const data = await svc.getAll(prefix, { user: userId })
+      await reply.send(ok(data))
+    },
+  )
 
   /** POST /api/settings/users/:userId/:key — 设置用户级单项配置。 */
   app.post(

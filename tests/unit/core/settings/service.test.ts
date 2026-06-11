@@ -97,19 +97,18 @@ describe('SettingsService.get', () => {
     expect(result).toBe(false)
   })
 
-  it('Redis 为 __NULL__ 时回退到 default 链路', async () => {
+  it('Redis 为 __NULL__ 时回退到 Schema default', async () => {
     settingNodeRegistry.clear()
     SettingNode('feature.enabled', { type: 'boolean', default: true })(TestFeature)
     const schemaMap = buildSchemaMap()
     const redis = createMockRedis({
       'settings:group:99:feature.enabled': '__NULL__',
-      'settings:default:0:feature.enabled': 'false',
     })
     const db = createMockDb()
     const service = new SettingsService(db, redis, schemaMap)
 
     const result = await service.get<boolean>('feature.enabled', { group: 99n })
-    expect(result).toBe(false)
+    expect(result).toBe(true) // Schema default
   })
 
   it('DB 无记录时回退到 Schema default', async () => {
@@ -128,14 +127,16 @@ describe('SettingsService.get', () => {
   })
 
   it('number 类型正确反序列化', async () => {
-    const { service } = createService({}, { 'settings:default:0:feature.count': '42' })
-    const result = await service.get<number>('feature.count')
+    // 无 scope 时直接回退到 Schema default（default scope 已移除）
+    const { service } = createService({}, { 'settings:group:99:feature.count': '42' })
+    const result = await service.get<number>('feature.count', { group: 99n })
     expect(result).toBe(42)
   })
 
   it('enum 类型返回标签字符串', async () => {
-    const { service } = createService({}, { 'settings:default:0:feature.permission': 'ADMIN' })
-    const result = await service.get<string>('feature.permission')
+    // 无 scope 时直接回退到 Schema default（default scope 已移除）
+    const { service } = createService({}, { 'settings:group:99:feature.permission': 'ADMIN' })
+    const result = await service.get<string>('feature.permission', { group: 99n })
     expect(result).toBe('ADMIN')
   })
 })
@@ -182,40 +183,6 @@ describe('SettingsService.resolveEnum', () => {
   it('非 enum 类型 key 应抛出异常', () => {
     const { service } = createService()
     expect(() => service.resolveEnum('feature.enabled', 'true')).toThrow('不是 enum 类型')
-  })
-})
-
-describe('SettingsService.isGroupMaterialized / materializeGroup', () => {
-  it('未物化的群返回 false', async () => {
-    const { service } = createService()
-    expect(await service.isGroupMaterialized(99n)).toBe(false)
-  })
-
-  it('materializeGroup 写入 DB 并标记 Redis Set', async () => {
-    const { service, redis } = createService()
-    await service.materializeGroup(99n)
-
-    expect(redis.sadd).toHaveBeenCalledWith('settings:materialized_groups', '99')
-  })
-
-  it('并发物化：获取锁失败时直接返回（不重复写入）', async () => {
-    settingNodeRegistry.clear()
-    SettingNode('feature.enabled', { type: 'boolean', default: true })(TestFeature)
-    const schemaMap = buildSchemaMap()
-
-    const redis = createMockRedis()
-    // set 始终返回 null（模拟锁已被持有）
-    vi.mocked(redis.set).mockResolvedValue(null)
-
-    const db = {
-      $queryRaw: vi.fn().mockResolvedValue([]),
-      $executeRaw: vi.fn().mockResolvedValue(1),
-    } as unknown as MainPrismaClient
-
-    const service = new SettingsService(db, redis, schemaMap)
-    await service.materializeGroup(99n)
-
-    expect(db.$executeRaw).not.toHaveBeenCalled()
   })
 })
 

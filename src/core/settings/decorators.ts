@@ -14,6 +14,8 @@ export interface SettingNodeOptions {
   enumOptions?: Record<string, number>
   /** 适用的作用域，默认 'all' */
   scope?: 'all' | 'group' | 'user'
+  /** 分类：permission 类配置项显示在权限页，config 类显示在设置页 */
+  category?: 'permission' | 'config'
 }
 
 export interface SettingNodeMeta {
@@ -23,6 +25,7 @@ export interface SettingNodeMeta {
   description: string
   enumOptions?: Record<string, number>
   scope: 'all' | 'group' | 'user'
+  category: 'permission' | 'config'
 }
 
 // ── 全局注册表 ──
@@ -46,6 +49,9 @@ export function SettingNode(key: string, options: SettingNodeOptions) {
       description: options.description ?? '',
       enumOptions: options.enumOptions,
       scope: options.scope ?? 'all',
+      category:
+        options.category ??
+        (key.endsWith('.enabled') || key.endsWith('.permission') ? 'permission' : 'config'),
     }
     const existing = settingNodeRegistry.get(target) ?? []
     existing.push(meta)

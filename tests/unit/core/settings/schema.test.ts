@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { MainPrismaClient } from '@/core/db/client.js'
 import { componentRegistry } from '@/core/framework/decorators.js'
 import { SettingNode, settingNodeRegistry } from '@/core/settings/decorators.js'
-import { buildSchemaMap, syncDefaults } from '@/core/settings/schema.js'
+import { buildSchemaMap, cleanOrphanKeys } from '@/core/settings/schema.js'
 
 beforeEach(() => {
   settingNodeRegistry.clear()
@@ -23,14 +23,16 @@ describe('buildSchemaMap', () => {
       type: 'boolean',
       default: true,
       owner: '__system__',
+      ownerDisplayName: '系统',
       scope: 'group',
+      category: 'permission',
     })
   })
 
   it('从 settingNodeRegistry 收集用户定义的配置项', () => {
     SettingNode('myfeature.enabled', { type: 'boolean', default: false })(TestHandler)
 
-    // 注册到 componentRegistry，让 buildSchemaMap 能找到 owner
+    // 注册到 componentRegistry，让 buildSchemaMap 能找到 owner 和 displayName
     componentRegistry.set('myfeature', {
       name: 'myfeature',
       displayName: 'My Feature',
@@ -44,17 +46,19 @@ describe('buildSchemaMap', () => {
     const map = buildSchemaMap()
     expect(map.has('myfeature.enabled')).toBe(true)
     expect(map.get('myfeature.enabled')!.owner).toBe('myfeature')
+    expect(map.get('myfeature.enabled')!.ownerDisplayName).toBe('My Feature')
   })
 
-  it('找不到 owner 时 owner 为 __unknown__', () => {
+  it('找不到 owner 时 owner 为 __unknown__，ownerDisplayName 回退为 __unknown__', () => {
     SettingNode('orphan.enabled', { type: 'boolean', default: true })(TestHandler)
 
     const map = buildSchemaMap()
     expect(map.get('orphan.enabled')!.owner).toBe('__unknown__')
+    expect(map.get('orphan.enabled')!.ownerDisplayName).toBe('__unknown__')
   })
 })
 
-describe('syncDefaults', () => {
+describe('cleanOrphanKeys', () => {
   function createMockDb(existingKeys: string[] = []) {
     return {
       $queryRaw: vi.fn().mockResolvedValue(existingKeys.map((key) => ({ key }))),
@@ -62,46 +66,39 @@ describe('syncDefaults', () => {
     } as unknown as MainPrismaClient
   }
 
-  it('DB 中不存在的 Schema key 应被 INSERT', async () => {
-    SettingNode('feature.enabled', { type: 'boolean', default: true })(TestHandler)
-    const map = buildSchemaMap()
-    const db = createMockDb([]) // DB 为空
+  it('DB 中不存在废弃 key 时不执行 DELETE', async () => {
+    const map = buildSchemaMap() // 仅含内置 bot.enabled
+    const db = createMockDb(['bot.enabled']) // DB 与 schema 一致
 
-    await syncDefaults(db, map)
+    await cleanOrphanKeys(db, map)
 
-    expect(db.$executeRaw).toHaveBeenCalled()
+    expect(db.$executeRaw).not.toHaveBeenCalled()
   })
 
   it('Schema 中不存在的 DB key 应被 DELETE', async () => {
     const map = buildSchemaMap() // 仅含内置 bot.enabled
     const db = createMockDb(['obsolete.key']) // DB 含废弃 key
 
-    await syncDefaults(db, map)
+    await cleanOrphanKeys(db, map)
 
     expect(db.$executeRaw).toHaveBeenCalled()
   })
 
-  it('两边均存在的 key 不触发 INSERT 或 DELETE', async () => {
-    const map = buildSchemaMap() // 仅含内置 bot.enabled
-    const db = createMockDb(['bot.enabled']) // DB 已有
+  it('DB 为空时不执行 DELETE', async () => {
+    const map = buildSchemaMap()
+    const db = createMockDb([]) // DB 为空
 
-    await syncDefaults(db, map)
+    await cleanOrphanKeys(db, map)
 
-    // $executeRaw 仅针对其他内置 key 调用（如果有），不针对 bot.enabled
-    const calls = vi.mocked(db.$executeRaw).mock.calls
-    // bot.enabled 已存在，不应出现 INSERT for bot.enabled
-    // 验证没有 DELETE（无废弃 key）
-    const callStrings = calls.map((c) => String(c[0]))
-    expect(callStrings.every((s) => !s.includes('bot.enabled') || !s.includes('INSERT'))).toBe(true)
+    expect(db.$executeRaw).not.toHaveBeenCalled()
   })
 
   it('logger 回调被调用时不抛出异常', async () => {
-    SettingNode('new.feature', { type: 'string', default: 'hello' })(TestHandler)
     const map = buildSchemaMap()
     const db = createMockDb(['obsolete.key'])
     const logger = { info: vi.fn() }
 
-    await expect(syncDefaults(db, map, logger)).resolves.toBeUndefined()
+    await expect(cleanOrphanKeys(db, map, logger)).resolves.toBeUndefined()
     expect(logger.info).toHaveBeenCalled()
   })
 })

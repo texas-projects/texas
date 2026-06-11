@@ -4,7 +4,7 @@
 
 export { SettingNode, settingNodeRegistry } from './decorators.js'
 export type { SettingNodeMeta, SettingNodeOptions, SettingValueType } from './decorators.js'
-export { buildSchemaMap, syncDefaults } from './schema.js'
+export { buildSchemaMap, cleanOrphanKeys } from './schema.js'
 export type { SettingNodeSchema } from './schema.js'
 export { SettingsService } from './service.js'
 export type { SettingsScope } from './service.js'
@@ -13,7 +13,7 @@ export { SettingsPermissionChecker } from './permission.js'
 import type { Redis } from 'ioredis'
 
 import { SettingsPermissionChecker } from './permission.js'
-import { buildSchemaMap, syncDefaults } from './schema.js'
+import { buildSchemaMap, cleanOrphanKeys } from './schema.js'
 import { SettingsService } from './service.js'
 
 import type { CacheClient } from '@/core/cache/client.js'
@@ -34,7 +34,7 @@ Startup({
   const personnelService = new PersonnelService(db, cache)
 
   const schemaMap = buildSchemaMap()
-  await syncDefaults(db, schemaMap)
+  await cleanOrphanKeys(db, schemaMap)
 
   const settings = new SettingsService(db, redis, schemaMap)
   const settingsChecker = new SettingsPermissionChecker(settings, personnelService, schemaMap)

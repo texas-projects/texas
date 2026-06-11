@@ -100,8 +100,6 @@ model User {
   checkinRecords           CheckinRecord[]      @relation("CheckinUser")
   jrlpAsUser               WifeRecord[]         @relation("JrlpUser")
   jrlpAsWife               WifeRecord[]         @relation("JrlpWife")
-  privateFeaturePermission PrivateFeaturePermission[]
-
   @@map("users")
 }
 
@@ -321,32 +319,6 @@ model DriftBottleItem {
   @@map("drift_bottle_items")
 }
 
-/// 群聊功能权限表 (group_id=0 为全局哨兵行)
-model GroupFeaturePermission {
-  id          String  @id @default(uuid()) @db.Uuid
-  groupId     BigInt  @map("group_id")
-  featureName String  @map("feature_name") @db.VarChar(64)
-  enabled     Boolean
-
-  @@unique([groupId, featureName], map: "uq_group_feature")
-  @@index([groupId])
-  @@map("permission_group")
-}
-
-/// 私聊功能用户权限表
-model PrivateFeaturePermission {
-  id          String  @id @default(uuid()) @db.Uuid
-  featureName String  @map("feature_name") @db.VarChar(64)
-  userQq      BigInt  @map("user_qq")
-  enabled     Boolean @default(true)
-
-  // ── Relations ──
-  user User @relation(fields: [userQq], references: [qq], onDelete: Cascade)
-
-  @@unique([featureName, userQq], map: "uq_private_feature_user")
-  @@index([featureName], map: "ix_permission_private_feature_name")
-  @@map("permission_private")
-}
 
 /// 聊天记录归档日志表
 model ChatArchiveLog {

@@ -11,7 +11,6 @@ import type { MainPrismaClient } from '@/core/db/client.js'
 // ── 常量 ──
 
 const NULL_SENTINEL = '__NULL__'
-const MATERIALIZED_SET = 'settings:materialized_groups'
 
 // ── 内部类型 ──
 
@@ -45,13 +44,12 @@ export class SettingsService {
 
   /**
    * 读取单项配置。
-   * 群聊链路: group Redis/DB → default Redis/DB → Schema default
-   * 私聊链路: user Redis/DB → default Redis/DB → Schema default
+   * 群聊链路: group Redis/DB → Schema default
+   * 私聊链路: user Redis/DB → Schema default
    */
   async get<T = unknown>(key: string, scope?: SettingsScope): Promise<T> {
     const schema = this.schemaMap.get(key)
 
-    // 确定目标 scope
     if (scope?.group) {
       const result = await this._resolve(key, 'group', scope.group)
       if (result !== undefined) return this._deserialize(result, schema) as T
@@ -60,53 +58,40 @@ export class SettingsService {
       if (result !== undefined) return this._deserialize(result, schema) as T
     }
 
-    // 回退到 default
-    const defaultResult = await this._resolve(key, 'default', 0n)
-    if (defaultResult !== undefined) return this._deserialize(defaultResult, schema) as T
-
-    // 最终回退到 Schema default
+    // 直接回退到 Schema default
     if (schema) return schema.default as T
     return undefined as T
   }
 
   /**
-   * 读取前缀下所有配置，返回扁平 Record。
-   * 先加载 default 全量，再用目标 scope 覆盖。
+   * 读取前缀下所有配置，返回带覆盖标记的 Record。
+   * Schema default 为基底，有 scope 时用 DB 覆盖行叠加。
    */
-  async getAll(prefix: string, scope?: { group?: bigint }): Promise<Record<string, unknown>> {
-    if (scope?.group) {
-      // 首次访问自动物化
-      if (!(await this.isGroupMaterialized(scope.group))) {
-        await this.materializeGroup(scope.group)
-      }
-    }
-
-    const result: Record<string, unknown> = {}
+  async getAll(
+    prefix: string,
+    scope?: SettingsScope,
+  ): Promise<Record<string, { value: unknown; overridden: boolean }>> {
+    const result: Record<string, { value: unknown; overridden: boolean }> = {}
 
     // Schema defaults 作为基底
     for (const [key, schema] of this.schemaMap) {
       if (key.startsWith(prefix)) {
-        result[key] = schema.default
+        result[key] = { value: schema.default, overridden: false }
       }
     }
 
-    // DB default 覆盖
-    const defaultRows: SettingsDbRow[] = await this.db.$queryRaw`
-      SELECT key, value, value_type FROM settings
-      WHERE type = 'default' AND scope = 0 AND key LIKE ${prefix + '%'}
-    `
-    for (const row of defaultRows) {
-      result[row.key] = this._deserialize(row.value, this.schemaMap.get(row.key))
-    }
-
-    // 群级覆盖
-    if (scope?.group) {
-      const groupRows: SettingsDbRow[] = await this.db.$queryRaw`
+    // DB scope 覆盖
+    if (scope?.group || scope?.user) {
+      const { type, scopeId } = this._resolveScope(scope)
+      const rows: SettingsDbRow[] = await this.db.$queryRaw`
         SELECT key, value, value_type FROM settings
-        WHERE type = 'group' AND scope = ${scope.group} AND key LIKE ${prefix + '%'}
+        WHERE type = ${type}::settings_entry_type AND scope = ${scopeId} AND key LIKE ${prefix + '%'}
       `
-      for (const row of groupRows) {
-        result[row.key] = this._deserialize(row.value, this.schemaMap.get(row.key))
+      for (const row of rows) {
+        result[row.key] = {
+          value: this._deserialize(row.value, this.schemaMap.get(row.key)),
+          overridden: true,
+        }
       }
     }
 
@@ -115,8 +100,19 @@ export class SettingsService {
 
   /**
    * 写入单项配置，校验 + DB 写入 + 缓存失效。
+   * value 为 null 时表示重置（删除覆盖行，回退到 Schema default）。
    */
   async set(key: string, value: unknown, scope: SettingsScope): Promise<void> {
+    // null 表示重置，删除该 scope 的覆盖行
+    if (value === null) {
+      const { type, scopeId } = this._resolveScope(scope)
+      await this.db.$executeRaw`
+        DELETE FROM settings WHERE key = ${key} AND type = ${type}::settings_entry_type AND scope = ${scopeId}
+      `
+      await this._invalidateCache(type, scopeId, key)
+      return
+    }
+
     const schema = this.schemaMap.get(key)
     if (!schema) throw new Error(`[settings] 未知配置项: ${key}`)
 
@@ -163,39 +159,6 @@ export class SettingsService {
     const schemas = [...this.schemaMap.values()]
     if (!prefix) return schemas
     return schemas.filter((s) => s.key.startsWith(prefix))
-  }
-
-  /** 物化群配置（Copy-on-Access）。 */
-  async materializeGroup(groupId: bigint): Promise<void> {
-    const lockKey = `settings:materialize_lock:${groupId.toString()}`
-    const acquired = await this.redis.set(lockKey, '1', 'EX', 30, 'NX')
-    if (!acquired) return
-
-    try {
-      if (await this.redis.sismember(MATERIALIZED_SET, groupId.toString())) return
-
-      await this.db.$executeRaw`
-        INSERT INTO settings (key, type, scope, value, value_type)
-        SELECT key, 'group'::settings_entry_type, ${groupId}, value, value_type
-        FROM settings
-        WHERE type = 'default' AND scope = 0
-        ON CONFLICT DO NOTHING
-      `
-
-      await this.redis.sadd(MATERIALIZED_SET, groupId.toString())
-
-      // 清除该群所有配置项缓存，下次访问重新从 DB 加载
-      const keys = [...this.schemaMap.keys()].map((k) => this._cacheKey('group', groupId, k))
-      if (keys.length > 0) await this.redis.del(...keys)
-    } finally {
-      await this.redis.del(lockKey)
-    }
-  }
-
-  /** 检查群是否已物化。 */
-  async isGroupMaterialized(groupId: bigint): Promise<boolean> {
-    const result = await this.redis.sismember(MATERIALIZED_SET, groupId.toString())
-    return result === 1
   }
 
   /** 将 enum 标签解析为数值。 */
@@ -282,10 +245,10 @@ export class SettingsService {
     }
   }
 
-  /** 将 scope 参数转为 type + scopeId。 */
+  /** 将 scope 参数转为 type + scopeId，scope 必须指定 group 或 user。 */
   private _resolveScope(scope: SettingsScope): { type: string; scopeId: bigint } {
     if (scope.group) return { type: 'group', scopeId: scope.group }
     if (scope.user) return { type: 'user', scopeId: scope.user }
-    return { type: 'default', scopeId: 0n }
+    throw new Error('[settings] scope 必须指定 group 或 user')
   }
 }

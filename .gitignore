@@ -149,8 +149,8 @@ vite.config.ts.timestamp-*
 .spec-workflow/
 .serena/
 
-# 杂项
-misc/
+# 本地文档
+docs/
 
 # Prisma 生成代码
 prisma/**/generated/
