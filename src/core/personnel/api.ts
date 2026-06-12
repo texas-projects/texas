@@ -10,7 +10,7 @@ import type { SyncCoordinator } from './sync.js'
 import type { PersonnelService } from './index.js'
 
 import { NotFoundError } from '@/core/errors.js'
-import { ok, fail } from '@/core/utils/response.js'
+import { ok, fail } from '@/core/response.js'
 
 /** 从 Fastify 请求中获取服务实例（服务挂载在 app.state 上）。 */
 function getPersonnelService(app: FastifyInstance): PersonnelService {

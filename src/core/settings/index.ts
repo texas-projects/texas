@@ -16,7 +16,7 @@ import { SettingsPermissionChecker } from './permission.js'
 import { buildSchemaMap, cleanOrphanKeys } from './schema.js'
 import { SettingsService } from './service.js'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import { Startup, Shutdown } from '@/core/lifecycle/registry.js'
 import type { PersonnelService } from '@/core/personnel/index.js'
 

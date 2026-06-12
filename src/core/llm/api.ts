@@ -18,7 +18,7 @@ import {
 import type { LLMService } from './index.js'
 
 import { NotFoundError } from '@/core/errors.js'
-import { ok, fail } from '@/core/utils/response.js'
+import { ok, fail } from '@/core/response.js'
 
 // ── 内部工具 ──
 

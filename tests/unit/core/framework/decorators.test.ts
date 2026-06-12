@@ -20,8 +20,8 @@ import {
   SettingNode,
   _pendingMethods,
   settingNodeRegistry,
-} from '@/core/framework/decorators.js'
-import { handlerRegistry } from '@/core/registries/handler.js'
+} from '@/core/dispatch/decorators.js'
+import { handlerRegistry } from '@/core/dispatch/registry.js'
 
 // 测试前清空全局注册表，避免跨测试污染
 beforeEach(() => {

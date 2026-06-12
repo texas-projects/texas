@@ -4,8 +4,8 @@
 
 import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
-import { handlerRegistry } from '@/core/registries/handler.js'
-import { ok } from '@/core/utils/response.js'
+import { handlerRegistry } from '@/core/dispatch/registry.js'
+import { ok } from '@/core/response.js'
 
 /**
  * 处理器管理路由插件。

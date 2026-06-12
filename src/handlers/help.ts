@@ -4,10 +4,10 @@
 
 import { getLogger } from '@logger'
 
-import type { Context } from '@/core/framework/context.js'
-import type { ComponentMeta } from '@/core/framework/decorators.js'
-import { Component, OnCommand, MessageScope } from '@/core/framework/decorators.js'
-import { handlerRegistry } from '@/core/registries/handler.js'
+import type { Context } from '@/core/dispatch/context.js'
+import type { ComponentMeta } from '@/core/dispatch/decorators.js'
+import { Component, OnCommand, MessageScope } from '@/core/dispatch/decorators.js'
+import { handlerRegistry } from '@/core/dispatch/registry.js'
 import type { HelpData } from '@/render-templates/help.js'
 import { render } from '@/services/renderer/index.js'
 

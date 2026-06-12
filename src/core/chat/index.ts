@@ -6,7 +6,7 @@ import { logger, type Logger } from '@logger'
 
 import type { ChatMessage } from '#prisma/chat'
 
-import type { ChatPrismaClient } from '@/core/db/client.js'
+import type { ChatPrismaClient } from '@/core/db.js'
 import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
 
 export type { ChatMessage }

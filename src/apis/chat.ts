@@ -5,8 +5,8 @@
 import { getLogger } from '@logger'
 import type { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
-import type { ServiceRegistry } from '@/core/registries/service-registry.js'
-import { ok, fail } from '@/core/utils/response.js'
+import type { ServiceRegistry } from '@/core/lifecycle/service-registry.js'
+import { ok, fail } from '@/core/response.js'
 
 const log = getLogger('chat')
 

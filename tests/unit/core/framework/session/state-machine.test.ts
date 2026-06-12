@@ -4,13 +4,13 @@
 
 import { describe, expect, it, vi } from 'vitest'
 
-import type { SessionContext } from '@/core/framework/session/context.js'
+import type { SessionContext } from '@/core/session/context.js'
 import {
   InvalidTransitionError,
   StateMachine,
   StateMachineError,
-} from '@/core/framework/session/state-machine.js'
-import { makeState } from '@/core/framework/session/state.js'
+} from '@/core/session/state-machine.js'
+import { makeState } from '@/core/session/state.js'
 
 // ── 测试辅助：伪 SessionContext ──
 

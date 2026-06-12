@@ -1,7 +1,7 @@
 // tests/unit/core/framework/echo-config.test.ts
 import { describe, it, expect } from 'vitest'
 
-import { defineConfig, normalizeEchoDirConfig } from '@/core/framework/echo-config.js'
+import { defineConfig, normalizeEchoDirConfig } from '@/core/echo/config.js'
 
 describe('EchoConfig', () => {
   it('defineConfig 透传配置', () => {

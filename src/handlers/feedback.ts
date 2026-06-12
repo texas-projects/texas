@@ -6,8 +6,8 @@
 
 import { logger } from '@logger'
 
-import type { Context } from '@/core/framework/context.js'
-import { Component, OnCommand, Permission, SettingNode } from '@/core/framework/decorators.js'
+import type { Context } from '@/core/dispatch/context.js'
+import { Component, OnCommand, Permission, SettingNode } from '@/core/dispatch/decorators.js'
 import type { FeedbackService } from '@/services/feedback.js'
 
 type FeedbackType = 'bug' | 'suggestion' | 'complaint'

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { Permission } from '@/core/framework/decorators.js'
+import { Permission } from '@/core/dispatch/decorators.js'
 import { SettingNode, settingNodeRegistry } from '@/core/settings/decorators.js'
 
 beforeEach(() => {

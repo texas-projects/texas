@@ -5,8 +5,8 @@
 import type { SettingNodeMeta } from './decorators.js'
 import { settingNodeRegistry } from './decorators.js'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
-import { handlerRegistry } from '@/core/registries/handler.js'
+import type { MainPrismaClient } from '@/core/db.js'
+import { handlerRegistry } from '@/core/dispatch/registry.js'
 
 // ── 类型定义 ──
 

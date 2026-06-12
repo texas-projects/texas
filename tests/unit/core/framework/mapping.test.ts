@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { MessageScope, Permission } from '@/core/framework/decorators.js'
-import type { HandlerMethod } from '@/core/framework/mapping.js'
+import { MessageScope, Permission } from '@/core/dispatch/decorators.js'
+import type { HandlerMethod } from '@/core/dispatch/mapping.js'
 import {
   CommandHandlerMapping,
   CompositeHandlerMapping,
@@ -11,7 +11,7 @@ import {
   KeywordHandlerMapping,
   RegexHandlerMapping,
   StartsWithHandlerMapping,
-} from '@/core/framework/mapping.js'
+} from '@/core/dispatch/mapping.js'
 import type { AnyOneBotEvent } from '@/core/protocol/models/events.js'
 
 // ── 测试用事件工厂 ──

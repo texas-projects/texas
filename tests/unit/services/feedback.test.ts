@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import type { BotAPI } from '@/core/protocol/api.js'
 import { FeedbackService } from '@/services/feedback.js'
 

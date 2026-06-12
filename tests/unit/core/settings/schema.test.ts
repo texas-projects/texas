@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
-import { handlerRegistry } from '@/core/registries/handler.js'
+import type { MainPrismaClient } from '@/core/db.js'
+import { handlerRegistry } from '@/core/dispatch/registry.js'
 import { SettingNode, settingNodeRegistry } from '@/core/settings/decorators.js'
 import { buildSchemaMap, cleanOrphanKeys } from '@/core/settings/schema.js'
 

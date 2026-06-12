@@ -4,9 +4,9 @@ import { resolve } from 'node:path'
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 
-import type { EchoConfig } from '@/core/framework/echo-config.js'
-import { EchoLoader } from '@/core/framework/loader.js'
-import type { TaskEchoEntry, RouteEchoEntry } from '@/core/framework/loader.js'
+import type { EchoConfig } from '@/core/echo/config.js'
+import { EchoLoader } from '@/core/echo/loader.js'
+import type { TaskEchoEntry, RouteEchoEntry } from '@/core/echo/loader.js'
 
 const TMP_DIR = resolve(import.meta.dirname, '__fixtures_loader__')
 

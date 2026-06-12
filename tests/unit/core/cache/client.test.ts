@@ -1,9 +1,9 @@
 import type { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { CacheClient } from '@/core/cache/client.js'
+import { RedisStore } from '@/core/redis/store.js'
 
-/** 创建一个 mock Redis 实例，包含 CacheClient 使用的所有方法。 */
+/** 创建一个 mock Redis 实例，包含 RedisStore 使用的所有方法。 */
 function createMockRedis() {
   return {
     get: vi.fn(),
@@ -19,14 +19,14 @@ function createMockRedis() {
 
 type MockRedis = ReturnType<typeof createMockRedis>
 
-describe('CacheClient', () => {
+describe('RedisStore', () => {
   let mockRedis: MockRedis
-  let cache: CacheClient
+  let cache: RedisStore
 
   beforeEach(() => {
     mockRedis = createMockRedis()
-    // CacheClient 接受 Redis 实例，使用 mock 代替
-    cache = new CacheClient(mockRedis as unknown as Redis, 300)
+    // RedisStore 接受 Redis 实例，使用 mock 代替
+    cache = new RedisStore(mockRedis as unknown as Redis, 300)
   })
 
   describe('get', () => {

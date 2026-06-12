@@ -7,9 +7,9 @@
 
 import { computeRelation } from './index.js'
 
-import type { CacheClient } from '@/core/cache/client.js'
-import type { MainPrismaClient } from '@/core/db/client.js'
-import { cacheKeyRegistry } from '@/core/registries/index.js'
+import type { MainPrismaClient } from '@/core/db.js'
+import type { RedisStore } from '@/core/redis/store.js'
+import { cacheKeyRegistry } from '@/core/registries.js'
 
 /**
  * 处理 Bot 实时增量事件，维护用户与群成员关系的即时状态。
@@ -17,7 +17,7 @@ import { cacheKeyRegistry } from '@/core/registries/index.js'
 export class PersonnelEventService {
   constructor(
     private readonly db: MainPrismaClient,
-    private readonly cache: CacheClient,
+    private readonly cache: RedisStore,
   ) {}
 
   /** 好友添加：若非 admin 则升级为 friend。 */

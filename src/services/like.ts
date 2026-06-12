@@ -6,8 +6,8 @@ import { logger, type Logger } from '@logger'
 
 import type { LikeTask, LikeHistory, LikeSource, Prisma } from '#prisma/main'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
-import { isPrismaKnownError } from '@/core/db/utils.js'
+import type { MainPrismaClient } from '@/core/db.js'
+import { isPrismaKnownError } from '@/core/db.js'
 import { Startup } from '@/core/lifecycle/registry.js'
 import type { BotAPI } from '@/core/protocol/api.js'
 

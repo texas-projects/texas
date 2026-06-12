@@ -1,7 +1,7 @@
 // tests/unit/core/registries/cache-key.test.ts
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { CacheKeyRegistry } from '@/core/registries/cache-key.js'
+import { CacheKeyRegistry } from '@/core/redis/registry.js'
 
 describe('CacheKeyRegistry', () => {
   let registry: CacheKeyRegistry

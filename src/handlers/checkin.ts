@@ -4,7 +4,7 @@
 
 import { logger } from '@logger'
 
-import type { Context } from '@/core/framework/context.js'
+import type { Context } from '@/core/dispatch/context.js'
 import {
   Component,
   OnCommand,
@@ -12,7 +12,7 @@ import {
   MessageScope,
   Permission,
   SettingNode,
-} from '@/core/framework/decorators.js'
+} from '@/core/dispatch/decorators.js'
 import { MessageBuilder } from '@/core/protocol/segment.js'
 import type { CheckinService } from '@/services/checkin.js'
 

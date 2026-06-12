@@ -11,15 +11,15 @@ import { resolve } from 'node:path'
 import { createLogger, setLogger, logger } from '@logger'
 import { Worker } from 'bullmq'
 
-import { CacheClient } from './cache/client.js'
 import { loadConfig } from './config.js'
-import { createMainDb, createChatDb } from './db/client.js'
-import { loadEchoConfig } from './framework/load-echo-config.js'
-import { EchoLoader } from './framework/loader.js'
-import type { TaskEchoEntry } from './framework/loader.js'
-import { createBullMQConnection, QUEUE_NAME } from './tasks/broker.js'
+import { createMainDb, createChatDb } from './db.js'
+import { loadEchoConfig } from './echo/load-config.js'
+import { EchoLoader } from './echo/loader.js'
+import type { TaskEchoEntry } from './echo/loader.js'
+import { createRedis, createBullMQConnection } from './redis/factory.js'
+import { RedisStore } from './redis/store.js'
+import { WorkerHeartbeatMiddleware } from './tasks/middleware.js'
 import type { TaskDefinition, MinimalSettingSchema } from './tasks/types.js'
-import { createRedis } from './utils/redis-factory.js'
 
 // ── 初始化 ──
 
@@ -38,9 +38,9 @@ async function main(): Promise<void> {
   const db = createMainDb(config.DATABASE_URL)
   const chatDb = createChatDb(config.CHAT_DATABASE_URL)
   const cacheRedis = createRedis(config.CACHE_REDIS_URL)
-  const cache = new CacheClient(cacheRedis)
+  const cacheStore = new RedisStore(cacheRedis, config.CACHE_DEFAULT_TTL)
 
-  const infraDeps: Record<string, unknown> = { db, chat_db: chatDb, cache }
+  const infraDeps: Record<string, unknown> = { db, chat_db: chatDb, cache: cacheStore }
 
   // ── EchoLoader 动态发现任务 ──
 
@@ -48,6 +48,19 @@ async function main(): Promise<void> {
   const baseDir = resolve(import.meta.dirname, '..', '..')
   const loader = new EchoLoader(echoConfig, baseDir)
   const taskEntries = await loader.discoverByType('task')
+
+  // ── 从 echoConfig 读取队列名 ──
+  const queueName = echoConfig.app?.queueName ?? 'aemeath-tasks'
+
+  // ── 心跳中间件 ──
+
+  const heartbeatKeyPrefix = echoConfig.app?.heartbeatKeyPrefix ?? 'aemeath:worker:heartbeat'
+  const heartbeat = new WorkerHeartbeatMiddleware(
+    cacheRedis,
+    'worker-main',
+    heartbeatKeyPrefix,
+    config.WORKER_HEARTBEAT_TTL_MS,
+  )
 
   // ── 构建路由表 + 聚合 schemaMap ──
 
@@ -71,7 +84,7 @@ async function main(): Promise<void> {
   // ── 单 Worker 实例，按 job.name 路由 ──
 
   const worker = new Worker(
-    QUEUE_NAME,
+    queueName,
     async (job) => {
       const def = processorMap.get(job.name)
       if (!def) throw new Error(`未知的 job name: ${job.name}`)
@@ -84,24 +97,26 @@ async function main(): Promise<void> {
 
       return def.processor(job, deps)
     },
-    { connection: bullConn, concurrency: 3 },
+    { connection: bullConn, concurrency: config.WORKER_CONCURRENCY },
   )
 
   // ── 事件处理 ──
 
   worker.on('completed', (job) => {
     log.info(`任务完成: job=${job.id ?? ''} name=${job.name}`)
+    void heartbeat.recordHeartbeat(queueName)
   })
 
   worker.on('failed', (job, err) => {
     log.error({ err }, `任务失败: job=${job?.id ?? ''} name=${job?.name ?? ''}`)
+    void heartbeat.recordHeartbeat(queueName)
   })
 
   worker.on('error', (err) => {
     log.error({ err }, 'Worker 错误')
   })
 
-  log.info(`Aemeath Worker 已启动，监听队列: ${QUEUE_NAME}`)
+  log.info(`Aemeath Worker 已启动，监听队列: ${queueName}`)
 
   // ── 优雅关闭 ──
 
@@ -110,7 +125,7 @@ async function main(): Promise<void> {
     await worker.close()
     await db.$disconnect()
     await chatDb.$disconnect()
-    cacheRedis.disconnect()
+    await cacheRedis.quit()
     log.info('Aemeath Worker 已停止')
     process.exit(0)
   }

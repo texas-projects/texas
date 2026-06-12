@@ -2,7 +2,7 @@
  * 人员管理领域 Prometheus 指标 —— 通过 MetricRegistry 自注册。
  */
 
-import { metricRegistry } from '@/core/registries/index.js'
+import { metricRegistry } from '@/core/registries.js'
 
 export const personnelSyncTotal = metricRegistry.counter(
   'aemeath_personnel_sync_total',

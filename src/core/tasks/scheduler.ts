@@ -5,6 +5,7 @@ import type { Queue } from 'bullmq'
 
 import type { TaskDefinition, ScheduleConfig } from './types.js'
 
+import { loadEchoConfig } from '@/core/echo/load-config.js'
 import { Startup, Shutdown } from '@/core/lifecycle/registry.js'
 
 const log = getLogger('task_scheduler')
@@ -18,22 +19,26 @@ export function setTaskDefinitions(defs: TaskDefinition[]): void {
 function resolveSchedule(
   schedule: ScheduleConfig | string,
   jobName: string,
+  defaultTimezone: string,
 ): { cron: string; tz: string; schedulerId: string } {
   if (typeof schedule === 'string') {
-    return { cron: schedule, tz: 'Asia/Shanghai', schedulerId: `schedule-${jobName}` }
+    return { cron: schedule, tz: defaultTimezone, schedulerId: `schedule-${jobName}` }
   }
   return {
     cron: schedule.cron,
-    tz: schedule.tz ?? 'Asia/Shanghai',
+    tz: schedule.tz ?? defaultTimezone,
     schedulerId: schedule.schedulerId ?? `schedule-${jobName}`,
   }
 }
 
 async function registerScheduledJobs(queue: Queue): Promise<void> {
+  const appConfig = await loadEchoConfig()
+  const defaultTimezone = appConfig.app?.defaultTimezone ?? 'Asia/Shanghai'
+
   const scheduled = _taskDefinitions.filter((d) => d.schedule != null)
   for (const def of scheduled) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const { cron, tz, schedulerId } = resolveSchedule(def.schedule!, def.jobName)
+    const { cron, tz, schedulerId } = resolveSchedule(def.schedule!, def.jobName, defaultTimezone)
     await queue.upsertJobScheduler(schedulerId, { pattern: cron, tz }, { name: def.jobName })
     log.info({ jobName: def.jobName, cron, schedulerId }, '注册定时任务')
   }

@@ -2,7 +2,7 @@
 import type { Job } from 'bullmq'
 import { describe, expect, it, vi } from 'vitest'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import { dailyLikeProcessor, JOB_NAME } from '@/tasks/daily-like.js'
 
 function createMockDb(tasks: { qq: bigint }[] = []) {

@@ -4,7 +4,7 @@
 
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
-import { fail } from '@/core/utils/response.js'
+import { fail } from '@/core/response.js'
 
 /**
  * 注册 Bearer token 认证钩子。

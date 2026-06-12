@@ -3,23 +3,12 @@
 import { Queue } from 'bullmq'
 import type { ConnectionOptions } from 'bullmq'
 
+export { createBullMQConnection } from '@/core/redis/factory.js'
+
 /** 唯一队列名称。 */
 export const QUEUE_NAME = 'aemeath-tasks' as const
 
 const _queueCache = new Map<string, Queue>()
-
-export function createBullMQConnection(redisUrl: string): ConnectionOptions {
-  const url = new URL(redisUrl)
-  const host = url.hostname
-  const port = url.port ? parseInt(url.port, 10) : 6379
-  const password = url.password ? decodeURIComponent(url.password) : undefined
-  const dbStr = url.pathname.replace(/^\//, '')
-  const db = dbStr !== '' ? parseInt(dbStr, 10) : 0
-  const conn: ConnectionOptions = { host, port, db }
-  if (password) conn.password = password
-  if (url.protocol === 'rediss:') conn.tls = {}
-  return conn
-}
 
 export function createQueue(name: string, connection: ConnectionOptions): Queue {
   return new Queue(name, { connection })

@@ -9,12 +9,12 @@ import { logger, type Logger } from '@logger'
 import { Prisma } from '#prisma/main'
 import type { CheckinRecord } from '#prisma/main'
 
-import type { CacheClient } from '@/core/cache/client.js'
-import type { MainPrismaClient } from '@/core/db/client.js'
-import { isPrismaKnownError } from '@/core/db/utils.js'
+import type { MainPrismaClient } from '@/core/db.js'
+import { isPrismaKnownError } from '@/core/db.js'
 import { Startup } from '@/core/lifecycle/registry.js'
-import { cacheKeyRegistry } from '@/core/registries/index.js'
-import { SHANGHAI_TZ } from '@/core/utils/helpers.js'
+import type { RedisStore } from '@/core/redis/store.js'
+import { cacheKeyRegistry } from '@/core/registries.js'
+import { SHANGHAI_TZ } from '@/core/utils.js'
 
 export type { CheckinRecord }
 
@@ -99,7 +99,7 @@ export class CheckinService {
 
   constructor(
     private readonly db: MainPrismaClient,
-    private readonly cache: CacheClient,
+    private readonly cache: RedisStore,
   ) {}
 
   // ════════════════════════════════════════════
@@ -445,6 +445,6 @@ Startup({
   requires: ['db', 'cache'],
 })(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
   const db = deps.db as MainPrismaClient
-  const cache = deps.cache as CacheClient
+  const cache = deps.cache as RedisStore
   return { user_checkin_service: new CheckinService(db, cache) }
 })

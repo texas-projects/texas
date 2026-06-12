@@ -4,17 +4,13 @@ import { getLogger } from '@logger'
 import { Job, Queue, QueueEvents } from 'bullmq'
 import type { ConnectionOptions } from 'bullmq'
 
-import type { CacheClient } from '@/core/cache/client.js'
 import type { BotAPI } from '@/core/protocol/api.js'
-import { QUEUE_NAME } from '@/core/tasks/broker.js'
+import type { RedisStore } from '@/core/redis/store.js'
 import { isBotActionResult, isSelfContainedResult } from '@/core/tasks/models.js'
 import type { BotActionJobResult } from '@/core/tasks/models.js'
 import type { ConnectionManager } from '@/core/ws/connection.js'
 
 const log = getLogger('TaskExecutor')
-
-/** Bot API 批量执行时各调用间的延迟（毫秒）。 */
-const SEND_DELAY_MS = 500
 
 /** 允许执行的 Bot API 方法白名单。 */
 const ALLOWED_BOT_METHODS = new Set(['sendGroupSign', 'sendLike', 'sendMsg', 'sendGroupMsg'])
@@ -26,11 +22,13 @@ export class TaskExecutor {
   constructor(
     private readonly botApi: BotAPI,
     private readonly connMgr: ConnectionManager,
-    private readonly cache: CacheClient,
+    private readonly cache: RedisStore,
     connection: ConnectionOptions,
+    queueName: string,
+    private readonly sendDelayMs = 500,
   ) {
-    this.events = new QueueEvents(QUEUE_NAME, { connection })
-    this.queue = new Queue(QUEUE_NAME, { connection })
+    this.events = new QueueEvents(queueName, { connection })
+    this.queue = new Queue(queueName, { connection })
   }
 
   /** 启动监听，订阅 QueueEvents 的 completed 事件。 */
@@ -100,7 +98,7 @@ export class TaskExecutor {
       }
 
       if (result.calls.length > 1) {
-        await new Promise<void>((r) => setTimeout(r, SEND_DELAY_MS))
+        await new Promise<void>((r) => setTimeout(r, this.sendDelayMs))
       }
     }
 
@@ -113,8 +111,8 @@ export class TaskExecutor {
           } else {
             await this.cache.del(op.key)
           }
-        } catch (error) {
-          log.error({ jobName, op, error }, 'postCacheOp 执行失败')
+        } catch (err) {
+          log.error({ jobName, op, err }, 'postCacheOp 执行失败')
         }
       }
     }

@@ -7,13 +7,13 @@
 
 import { logger, type Logger } from '@logger'
 
-import type { CacheClient } from '@/core/cache/client.js'
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import { Startup } from '@/core/lifecycle/registry.js'
 import type { BotAPI } from '@/core/protocol/api.js'
-import { cacheKeyRegistry } from '@/core/registries/index.js'
+import type { RedisStore } from '@/core/redis/store.js'
+import { cacheKeyRegistry } from '@/core/registries.js'
 import type { SettingsService } from '@/core/settings/service.js'
-import { SHANGHAI_TZ } from '@/core/utils/helpers.js'
+import { SHANGHAI_TZ } from '@/core/utils.js'
 import type { ConnectionManager } from '@/core/ws/connection.js'
 
 // ── 常量 ──
@@ -51,7 +51,7 @@ export class DailyCheckinService {
 
   constructor(
     private readonly db: MainPrismaClient,
-    private readonly cache: CacheClient,
+    private readonly cache: RedisStore,
     private readonly botApi: BotAPI,
     private readonly connMgr: ConnectionManager,
     private readonly settings: SettingsService,
@@ -188,7 +188,7 @@ Startup({
   requires: ['db', 'cache', 'bot_api', 'conn_mgr', 'settings'],
 })(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
   const db = deps.db as MainPrismaClient
-  const cache = deps.cache as CacheClient
+  const cache = deps.cache as RedisStore
   const botApi = deps.bot_api as BotAPI
   const connMgr = deps.conn_mgr as ConnectionManager
   const settings = deps.settings as SettingsService

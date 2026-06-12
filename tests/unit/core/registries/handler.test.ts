@@ -1,8 +1,8 @@
 // tests/unit/core/registries/handler.test.ts
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { HandlerRegistry } from '@/core/registries/handler.js'
-import type { HandlerRegistryEntry } from '@/core/registries/handler.js'
+import { HandlerRegistry } from '@/core/dispatch/registry.js'
+import type { HandlerRegistryEntry } from '@/core/dispatch/registry.js'
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 class Placeholder {}

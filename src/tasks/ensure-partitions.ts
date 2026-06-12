@@ -2,7 +2,7 @@
 
 import type { Job } from 'bullmq'
 
-import type { ChatPrismaClient } from '@/core/db/client.js'
+import type { ChatPrismaClient } from '@/core/db.js'
 import type { SelfContainedJobResult } from '@/core/tasks/models.js'
 import type { TaskDefinition } from '@/core/tasks/types.js'
 

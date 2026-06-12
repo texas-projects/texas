@@ -10,7 +10,7 @@ import { ArchiveExporter, PARTITION_NAME_RE } from './exporter.js'
 import type { ArchiveExporterSettings } from './exporter.js'
 import { ArchiveS3, type S3Settings } from './s3.js'
 
-import type { ChatPrismaClient, MainPrismaClient } from '@/core/db/client.js'
+import type { ChatPrismaClient, MainPrismaClient } from '@/core/db.js'
 
 /** 归档单个分区的执行结果。 */
 export interface PartitionArchiveResult {

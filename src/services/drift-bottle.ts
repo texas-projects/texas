@@ -5,8 +5,8 @@
 import type { DriftBottleItem, DriftBottlePool, DriftBottleGroupPool } from '#prisma/main'
 import { Prisma } from '#prisma/main'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
-import { isPrismaKnownError } from '@/core/db/utils.js'
+import type { MainPrismaClient } from '@/core/db.js'
+import { isPrismaKnownError } from '@/core/db.js'
 import { Startup } from '@/core/lifecycle/registry.js'
 
 export type { DriftBottleItem, DriftBottlePool, DriftBottleGroupPool }

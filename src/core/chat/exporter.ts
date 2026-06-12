@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto'
 import { createReadStream } from 'node:fs'
 import { stat } from 'node:fs/promises'
 
-import type { ChatPrismaClient } from '@/core/db/client.js'
+import type { ChatPrismaClient } from '@/core/db.js'
 
 /** 归档导出配置。 */
 export interface ArchiveExporterSettings {

@@ -16,7 +16,7 @@ import {
   type UpdateProviderData,
 } from './schemas.js'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import { NotFoundError } from '@/core/errors.js'
 import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
 

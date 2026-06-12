@@ -4,7 +4,7 @@
 
 import { logger } from '@logger'
 
-import type { Context } from '@/core/framework/context.js'
+import type { Context } from '@/core/dispatch/context.js'
 import {
   Component,
   OnStartsWith,
@@ -12,7 +12,7 @@ import {
   MessageScope,
   Permission,
   SettingNode,
-} from '@/core/framework/decorators.js'
+} from '@/core/dispatch/decorators.js'
 import type { MessageSegment } from '@/core/protocol/models/segments.js'
 import { MessageBuilder, Seg } from '@/core/protocol/segment.js'
 import type { DriftBottleService } from '@/services/drift-bottle.js'

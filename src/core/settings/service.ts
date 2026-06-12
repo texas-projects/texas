@@ -6,7 +6,7 @@ import type { Redis } from 'ioredis'
 
 import type { SettingNodeSchema } from './schema.js'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 
 // ── 常量 ──
 

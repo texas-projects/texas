@@ -1,7 +1,7 @@
 import type { Redis } from 'ioredis'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import { SettingNode, settingNodeRegistry } from '@/core/settings/decorators.js'
 import { buildSchemaMap } from '@/core/settings/schema.js'
 import { SettingsService } from '@/core/settings/service.js'

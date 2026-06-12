@@ -2,9 +2,9 @@
 
 import type { Job } from 'bullmq'
 
-import type { CacheClient } from '@/core/cache/client.js'
-import type { MainPrismaClient } from '@/core/db/client.js'
-import { cacheKeyRegistry } from '@/core/registries/index.js'
+import type { MainPrismaClient } from '@/core/db.js'
+import type { RedisStore } from '@/core/redis/store.js'
+import { cacheKeyRegistry } from '@/core/registries.js'
 import type { MinimalSettingSchema } from '@/core/settings/query.js'
 import { getSettingValue } from '@/core/settings/query.js'
 import type { BotActionJobResult, PostCacheOp } from '@/core/tasks/models.js'
@@ -17,7 +17,7 @@ const CHECKIN_TTL = 90_000
 
 export interface CheckinWorkerDeps {
   db: MainPrismaClient
-  cache: CacheClient
+  cache: RedisStore
   schemaMap: ReadonlyMap<string, MinimalSettingSchema>
 }
 

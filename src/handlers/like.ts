@@ -2,14 +2,14 @@
  * 点赞 Bot 处理器 —— 响应 /like 或 /点赞 命令。
  */
 
-import type { Context } from '@/core/framework/context.js'
+import type { Context } from '@/core/dispatch/context.js'
 import {
   Component,
   OnCommand,
   MessageScope,
   Permission,
   SettingNode,
-} from '@/core/framework/decorators.js'
+} from '@/core/dispatch/decorators.js'
 import type { LikeService } from '@/services/like.js'
 
 const DEFAULT_LIKE_TIMES = 10

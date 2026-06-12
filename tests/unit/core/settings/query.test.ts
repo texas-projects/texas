@@ -1,7 +1,7 @@
 // tests/unit/core/settings/query.test.ts
 import { describe, expect, it, vi } from 'vitest'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import { getSettingValue } from '@/core/settings/query.js'
 import type { SettingsQueryContext } from '@/core/settings/query.js'
 

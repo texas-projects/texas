@@ -6,7 +6,7 @@ import { logger, type Logger } from '@logger'
 
 import type { Prisma, Feedback, FeedbackStatus, FeedbackSource, FeedbackType } from '#prisma/main'
 
-import type { MainPrismaClient } from '@/core/db/client.js'
+import type { MainPrismaClient } from '@/core/db.js'
 import { Startup } from '@/core/lifecycle/registry.js'
 import type { BotAPI } from '@/core/protocol/api.js'
 

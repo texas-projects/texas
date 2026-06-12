@@ -5,11 +5,11 @@
 import type { SettingNodeSchema } from './schema.js'
 import type { SettingsService } from './service.js'
 
-import type { Context } from '@/core/framework/context.js'
-import { Permission } from '@/core/framework/decorators.js'
-import type { FeatureChecker } from '@/core/framework/ports.js'
+import type { Context } from '@/core/dispatch/context.js'
+import { Permission } from '@/core/dispatch/decorators.js'
+import type { FeatureChecker } from '@/core/dispatch/mapping.js'
+import { handlerRegistry } from '@/core/dispatch/registry.js'
 import type { PersonnelService } from '@/core/personnel/index.js'
-import { handlerRegistry } from '@/core/registries/handler.js'
 
 /** dispatcher 注入到 Context 的 handler 方法元数据。 */
 interface HandlerMethod {

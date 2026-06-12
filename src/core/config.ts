@@ -40,6 +40,19 @@ export const ConfigSchema = Type.Object({
   PERSISTENT_REDIS_URL: Type.String({ default: '' }),
   CACHE_DEFAULT_TTL: Type.Number({ minimum: 1, default: 300 }),
 
+  // 任务与 Worker
+  TASK_SEND_DELAY_MS: Type.Number({
+    default: 500,
+    minimum: 0,
+    description: 'Bot 任务发送延迟毫秒数',
+  }),
+  WORKER_CONCURRENCY: Type.Number({ default: 3, minimum: 1, description: 'BullMQ Worker 并发数' }),
+  WORKER_HEARTBEAT_TTL_MS: Type.Number({
+    default: 30_000,
+    minimum: 1000,
+    description: 'Worker 心跳 Redis key TTL 毫秒数',
+  }),
+
   // S3
   S3_ENDPOINT_URL: Type.String({ default: '' }),
   S3_ACCESS_KEY_ID: Type.String({ default: '' }),

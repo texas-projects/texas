@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { Context, FinishError } from '@/core/framework/context.js'
+import { Context, FinishError } from '@/core/dispatch/context.js'
 import type { BotAPI } from '@/core/protocol/api.js'
 import type { AnyOneBotEvent } from '@/core/protocol/models/events.js'
 import type { MessageSegment } from '@/core/protocol/models/segments.js'

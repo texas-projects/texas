@@ -6,7 +6,7 @@
  *  - 人员管理指标已迁移至 @/core/personnel/metrics.js
  */
 
-import { metricRegistry } from '@/core/registries/index.js'
+import { metricRegistry } from './registry.js'
 
 /**
  * 兼容 prom-client Registry 接口的薄包装，供 main.ts 的 /metrics 端点使用。

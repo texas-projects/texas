@@ -1,8 +1,8 @@
 // tests/unit/core/tasks/executor.test.ts
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { CacheClient } from '@/core/cache/client.js'
 import type { BotAPI } from '@/core/protocol/api.js'
+import type { RedisStore } from '@/core/redis/store.js'
 import type { ConnectionManager } from '@/core/ws/connection.js'
 
 // ── BullMQ mock 工厂（每个 test 独立实例化，避免 .mock.results 下标竞争）──
@@ -51,7 +51,7 @@ function createMockConnMgr(connected = true) {
 }
 
 function createMockCache() {
-  return { set: vi.fn().mockResolvedValue(undefined) } as unknown as CacheClient
+  return { set: vi.fn().mockResolvedValue(undefined) } as unknown as RedisStore
 }
 
 describe('TaskExecutor', () => {
@@ -76,7 +76,13 @@ describe('TaskExecutor', () => {
 
     const { TaskExecutor } = await import('@/core/tasks/executor.js')
     const botApi = createMockBotApi()
-    const executor = new TaskExecutor(botApi, createMockConnMgr(), createMockCache(), {})
+    const executor = new TaskExecutor(
+      botApi,
+      createMockConnMgr(),
+      createMockCache(),
+      {},
+      'aemeath-tasks',
+    )
     executor.start()
 
     mockEvents.emit('completed', {
@@ -94,7 +100,13 @@ describe('TaskExecutor', () => {
 
     const { TaskExecutor } = await import('@/core/tasks/executor.js')
     const botApi = createMockBotApi()
-    const executor = new TaskExecutor(botApi, createMockConnMgr(false), createMockCache(), {})
+    const executor = new TaskExecutor(
+      botApi,
+      createMockConnMgr(false),
+      createMockCache(),
+      {},
+      'aemeath-tasks',
+    )
     executor.start()
 
     mockEvents.emit('completed', {
@@ -115,7 +127,13 @@ describe('TaskExecutor', () => {
 
     const { TaskExecutor } = await import('@/core/tasks/executor.js')
     const botApi = createMockBotApi()
-    const executor = new TaskExecutor(botApi, createMockConnMgr(), createMockCache(), {})
+    const executor = new TaskExecutor(
+      botApi,
+      createMockConnMgr(),
+      createMockCache(),
+      {},
+      'aemeath-tasks',
+    )
     executor.start()
 
     mockEvents.emit('completed', {
@@ -136,7 +154,13 @@ describe('TaskExecutor', () => {
 
     const { TaskExecutor } = await import('@/core/tasks/executor.js')
     const botApi = createMockBotApi()
-    const executor = new TaskExecutor(botApi, createMockConnMgr(), createMockCache(), {})
+    const executor = new TaskExecutor(
+      botApi,
+      createMockConnMgr(),
+      createMockCache(),
+      {},
+      'aemeath-tasks',
+    )
     executor.start()
 
     mockEvents.emit('completed', {
@@ -159,7 +183,7 @@ describe('TaskExecutor', () => {
     const { TaskExecutor } = await import('@/core/tasks/executor.js')
     const botApi = createMockBotApi()
     const cache = createMockCache()
-    const executor = new TaskExecutor(botApi, createMockConnMgr(), cache, {})
+    const executor = new TaskExecutor(botApi, createMockConnMgr(), cache, {}, 'aemeath-tasks')
     executor.start()
 
     mockEvents.emit('completed', {

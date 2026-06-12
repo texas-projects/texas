@@ -4,14 +4,14 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { CacheClient } from '@/core/cache/client.js'
-import type { Context } from '@/core/framework/context.js'
-import { InteractiveSession } from '@/core/framework/session/base.js'
-import type { SessionData } from '@/core/framework/session/base.js'
-import type { SessionContext } from '@/core/framework/session/context.js'
-import { SessionManager } from '@/core/framework/session/manager.js'
-import { makeState } from '@/core/framework/session/state.js'
-import type { State } from '@/core/framework/session/state.js'
+import type { Context } from '@/core/dispatch/context.js'
+import type { RedisStore } from '@/core/redis/store.js'
+import { InteractiveSession } from '@/core/session/base.js'
+import type { SessionData } from '@/core/session/base.js'
+import type { SessionContext } from '@/core/session/context.js'
+import { SessionManager } from '@/core/session/manager.js'
+import { makeState } from '@/core/session/state.js'
+import type { State } from '@/core/session/state.js'
 
 // ── Mock CacheClient ──
 
@@ -26,7 +26,7 @@ function makeMockCache() {
     getOrSet: vi.fn().mockResolvedValue(null),
     deleteByPattern: vi.fn().mockResolvedValue(0),
   }
-  return cache as unknown as CacheClient & typeof cache
+  return cache as unknown as RedisStore & typeof cache
 }
 
 // ── Mock Context ──
