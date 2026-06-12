@@ -53,6 +53,18 @@ export const ConfigSchema = Type.Object({
     description: 'Worker 心跳 Redis key TTL 毫秒数',
   }),
 
+  // 渲染缓存
+  RENDER_CACHE_TTL: Type.Number({
+    default: 3600,
+    minimum: 1,
+    description: '渲染结果 Redis 缓存 TTL（秒）',
+  }),
+  RENDER_CACHE_MAX_BYTES: Type.Number({
+    default: 1_048_576,
+    minimum: 1,
+    description: '渲染结果缓存 size guard 阈值（字节），超过则跳过缓存',
+  }),
+
   // S3
   S3_ENDPOINT_URL: Type.String({ default: '' }),
   S3_ACCESS_KEY_ID: Type.String({ default: '' }),

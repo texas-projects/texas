@@ -1,8 +1,7 @@
-/**
- * 帮助文档模板 —— 渲染功能列表页面。
- */
+/** 帮助文档模板 —— 渲染功能列表页面。 */
 
-import type { SatoriElement, TemplateFunction } from '@/services/renderer/types.js'
+import { registerTemplate } from '../templates.js'
+import type { SatoriElement, TemplateFunction } from '../types.js'
 
 export interface HelpData {
   title: string
@@ -19,7 +18,7 @@ const helpTemplate: TemplateFunction<HelpData> = (data): SatoriElement => ({
       flexDirection: 'column',
       padding: '24px',
       gap: '16px',
-      fontFamily: 'Noto Sans CJK SC, sans-serif',
+      fontFamily: 'Noto Sans CJK SC, Noto Sans, sans-serif',
       backgroundColor: '#ffffff',
     },
     children: [
@@ -75,4 +74,5 @@ const helpTemplate: TemplateFunction<HelpData> = (data): SatoriElement => ({
   },
 })
 
-export default helpTemplate
+// 模块加载时自注册，无需中央配置
+registerTemplate('help', helpTemplate as TemplateFunction)

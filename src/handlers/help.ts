@@ -8,8 +8,8 @@ import type { Context } from '@/core/dispatch/context.js'
 import { handler, OnCommand, MessageScope } from '@/core/dispatch/decorators.js'
 import { handlerRegistry } from '@/core/dispatch/registry.js'
 import type { HandlerMeta } from '@/core/dispatch/registry.js'
-import type { HelpData } from '@/render-templates/help.js'
-import { render } from '@/services/renderer/index.js'
+import { enqueueRender } from '@/core/utils/enqueue-render.js'
+import type { HelpData } from '@/renderer/templates/help.js'
 
 const log = getLogger('help')
 
@@ -99,11 +99,17 @@ async function handleList(
   }
 
   try {
-    const { Seg } = await import('@/core/protocol/segment.js')
-    const buf = await render('help', helpData, { width: RENDER_WIDTH })
-    await ctx.reply([Seg.image(`base64://${buf.toString('base64')}`)])
+    const { Queue: QueueClass } = await import('bullmq')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+    const queue = ctx.getService(QueueClass as any)
+    await enqueueRender(queue, {
+      template: 'help',
+      data: helpData,
+      sendTo: ctx.groupId != null ? { groupId: ctx.groupId } : { userId: ctx.userId },
+      width: RENDER_WIDTH,
+    })
   } catch (err) {
-    log.error({ userId: ctx.userId, err }, '帮助列表渲染失败')
+    log.error({ userId: ctx.userId, err }, '帮助列表渲染任务投递失败')
     return fallbackText(ctx)
   }
   return true
@@ -135,11 +141,17 @@ async function handleDetail(
   }
 
   try {
-    const { Seg } = await import('@/core/protocol/segment.js')
-    const buf = await render('help', helpData, { width: RENDER_WIDTH })
-    await ctx.reply([Seg.image(`base64://${buf.toString('base64')}`)])
+    const { Queue: QueueClass } = await import('bullmq')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+    const queue = ctx.getService(QueueClass as any)
+    await enqueueRender(queue, {
+      template: 'help',
+      data: helpData,
+      sendTo: ctx.groupId != null ? { groupId: ctx.groupId } : { userId: ctx.userId },
+      width: RENDER_WIDTH,
+    })
   } catch (err) {
-    log.error({ userId: ctx.userId, err }, '帮助详情渲染失败')
+    log.error({ userId: ctx.userId, err }, '帮助详情渲染任务投递失败')
     return fallbackText(ctx)
   }
   return true

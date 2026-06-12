@@ -6,8 +6,12 @@ import type { ConnectionOptions } from 'bullmq'
 
 import type { BotAPI } from '@/core/protocol/api.js'
 import type { RedisStore } from '@/core/redis/store.js'
-import { isBotActionResult, isSelfContainedResult } from '@/core/tasks/models.js'
-import type { BotActionJobResult } from '@/core/tasks/models.js'
+import {
+  isBotActionResult,
+  isRenderSendResult,
+  isSelfContainedResult,
+} from '@/core/tasks/models.js'
+import type { BotActionJobResult, RenderSendJobResult } from '@/core/tasks/models.js'
 import type { ConnectionManager } from '@/core/ws/connection.js'
 
 const log = getLogger('TaskExecutor')
@@ -69,6 +73,11 @@ export class TaskExecutor {
       return
     }
 
+    if (isRenderSendResult(result)) {
+      await this._executeRenderSend(result)
+      return
+    }
+
     log.warn({ jobName, result }, '未知的 job result 类型')
   }
 
@@ -115,6 +124,35 @@ export class TaskExecutor {
           log.error({ jobName, op, err }, 'postCacheOp 执行失败')
         }
       }
+    }
+  }
+
+  private async _executeRenderSend(result: RenderSendJobResult): Promise<void> {
+    if (!this.connMgr.isConnected) {
+      log.warn({ tempKey: result.tempKey }, 'WS 未连接，跳过 render-send')
+      return
+    }
+
+    const b64 = await this.cache.get<string>(result.tempKey)
+    if (b64 === null) {
+      log.warn({ tempKey: result.tempKey }, 'render-send temp key 已过期，静默丢弃')
+      return
+    }
+
+    // NapCat 专有扩展：file=base64:// 前缀，非 OneBot 11 标准
+    const cqCode = `[CQ:image,file=base64://${b64}]`
+
+    try {
+      if ('groupId' in result.sendTo) {
+        await this.botApi.sendGroupMsg(result.sendTo.groupId, cqCode)
+      } else {
+        await this.botApi.sendPrivateMsg(result.sendTo.userId, cqCode)
+      }
+    } catch (err) {
+      log.error({ tempKey: result.tempKey, err }, 'render-send Bot API 调用失败')
+    } finally {
+      // 无论发送成功与否均清理 temp key，避免 TTL 内二次消费
+      await this.cache.del(result.tempKey).catch(() => undefined)
     }
   }
 }

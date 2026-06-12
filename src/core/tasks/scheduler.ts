@@ -5,7 +5,7 @@ import type { Queue } from 'bullmq'
 
 import type { TaskDefinition, ScheduleConfig } from './types.js'
 
-import { loadEchoConfig } from '@/core/echo/load-config.js'
+import { loadEchoConfig } from '@/core/echo/config.js'
 import { Startup, Shutdown } from '@/core/lifecycle/registry.js'
 
 const log = getLogger('task_scheduler')

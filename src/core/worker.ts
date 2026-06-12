@@ -13,7 +13,7 @@ import { Worker } from 'bullmq'
 
 import { loadConfig } from './config.js'
 import { createMainDb, createChatDb } from './db.js'
-import { loadEchoConfig } from './echo/load-config.js'
+import { loadEchoConfig } from './echo/config.js'
 import { EchoLoader } from './echo/loader.js'
 import type { TaskEchoEntry } from './echo/loader.js'
 import { createRedis, createBullMQConnection } from './redis/factory.js'

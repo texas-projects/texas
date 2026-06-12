@@ -1,5 +1,7 @@
 // src/core/echo/config.ts
 /** Echo 配置定义与工具函数。 */
+import { resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 export type EchoType = 'handler' | 'service' | 'task' | 'route'
 
@@ -40,4 +42,16 @@ export function normalizeEchoDirConfig(config: EchoDirConfig): NormalizedEchoDir
     return { dirs: config, exclude: [] }
   }
   return { dirs: config.dirs, exclude: config.exclude ?? [] }
+}
+
+export async function loadEchoConfig(baseDir?: string): Promise<EchoConfig> {
+  const root = baseDir ?? resolve(import.meta.dirname, '..', '..', '..')
+  const configPath = resolve(root, 'aemeath.config.ts')
+  const configUrl = pathToFileURL(configPath).href
+  try {
+    const mod = (await import(configUrl)) as { default: EchoConfig }
+    return mod.default
+  } catch (err) {
+    throw new Error(`无法加载 Echo 配置文件 ${configPath}`, { cause: err })
+  }
 }

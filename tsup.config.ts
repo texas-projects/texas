@@ -1,10 +1,6 @@
-import { cp, mkdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 import { defineConfig } from 'tsup'
-
-const FONT_SRC = 'node_modules/@fontsource/noto-sans-sc/files/noto-sans-sc-chinese-simplified-400-normal.woff2'
-const FONT_DEST_NAME = 'noto-sans-sc-chinese-simplified-400-normal.woff2'
 
 export default defineConfig({
   entry: {
@@ -22,11 +18,5 @@ export default defineConfig({
   external: [/^#prisma\/.*/],
   esbuildOptions(options) {
     options.alias = { '@logger': resolve('./src/core/logging/index.ts') }
-  },
-  async onSuccess() {
-    // 将 @fontsource/noto-sans-sc 中的字体拷贝到 dist/assets/fonts/
-    const destDir = resolve('dist/assets/fonts')
-    await mkdir(destDir, { recursive: true })
-    await cp(resolve(FONT_SRC), resolve(destDir, FONT_DEST_NAME))
   },
 })

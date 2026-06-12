@@ -1,6 +1,4 @@
-/**
- * SVG 渲染系统类型定义。
- */
+/** SVG 渲染系统类型定义。 */
 
 export interface SatoriElement {
   type: string
@@ -11,8 +9,7 @@ export interface SatoriElement {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TemplateFunction<T = any> = (data: T) => SatoriElement
+export type TemplateFunction<T = unknown> = (data: T) => SatoriElement
 
 export interface RenderOptions {
   width?: number

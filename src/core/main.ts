@@ -25,7 +25,7 @@ import { CompositeHandlerMapping } from './dispatch/mapping.js'
 import type { HandlerMethod, FeatureChecker } from './dispatch/mapping.js'
 import { handlerRegistry } from './dispatch/registry.js'
 import type { EchoConfig } from './echo/config.js'
-import { loadEchoConfig } from './echo/load-config.js'
+import { loadEchoConfig } from './echo/config.js'
 import { EchoLoader } from './echo/loader.js'
 import type { RouteEchoEntry, TaskEchoEntry } from './echo/loader.js'
 import { LifecycleOrchestrator } from './lifecycle/orchestrator.js'
@@ -202,6 +202,10 @@ async function _startup(
   const bullConn = createBullMQConnection(config.BULLMQ_REDIS_URL)
   const queue = getTaskQueue(bullConn)
   const queueName = echoConfig.app?.queueName ?? 'aemeath-tasks'
+
+  // 将 queue 注入 dispatcher.services，供 ctx.getService(Queue) 使用
+  const { Queue: QueueClass } = await import('bullmq')
+  dispatcher.services.set(QueueClass, queue)
 
   // 10. 生命周期编排器：按拓扑顺序启动所有业务模块
   const orchestrator = new LifecycleOrchestrator()

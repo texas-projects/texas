@@ -14,7 +14,7 @@ import { resolveTimeout } from './timeout.js'
 import type { TimeoutConfig } from './timeout.js'
 
 import type { Context } from '@/core/dispatch/context.js'
-import { loadEchoConfig } from '@/core/echo/load-config.js'
+import { loadEchoConfig } from '@/core/echo/config.js'
 import type { RedisStore } from '@/core/redis/store.js'
 
 /**

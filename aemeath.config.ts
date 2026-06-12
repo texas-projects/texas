@@ -17,7 +17,7 @@ export default defineConfig({
   },
   echoes: {
     handler: ['src/handlers'],
-    service: ['src/services', 'src/render-templates'],
+    service: ['src/services'],
     task: ['src/tasks'],
     route: {
       dirs: ['src/apis'],

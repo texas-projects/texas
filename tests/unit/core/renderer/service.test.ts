@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 
-import { RenderService } from '@/services/renderer/service.js'
-import type { TemplateFunction } from '@/services/renderer/types.js'
+import { RenderService } from '@/renderer/service.js'
+import type { TemplateFunction } from '@/renderer/types.js'
 
 vi.mock('@/core/logging/index.js', () => ({
   getLogger: vi.fn().mockReturnValue({
@@ -30,7 +30,7 @@ vi.mock('@resvg/resvg-js', () => ({
 }))
 
 // Mock the fonts module using its path as seen from service.ts
-vi.mock('@/services/renderer/fonts.js', () => ({
+vi.mock('@/renderer/fonts.js', () => ({
   loadFonts: vi
     .fn()
     .mockResolvedValue([{ name: 'test', data: Buffer.alloc(1), weight: 400, style: 'normal' }]),
@@ -44,7 +44,7 @@ describe('RenderService', () => {
   })
 
   it('throws RenderError if not initialized', async () => {
-    service.register('test', (() => ({ type: 'div', props: {} })) as TemplateFunction)
+    service.register('test', () => ({ type: 'div', props: {} }))
     await expect(service.render('test', {})).rejects.toThrow('Renderer not initialized')
   })
 

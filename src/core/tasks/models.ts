@@ -25,7 +25,7 @@ export interface SelfContainedJobResult {
   summary: Record<string, unknown>
 }
 
-export type JobResult = BotActionJobResult | SelfContainedJobResult
+export type JobResult = BotActionJobResult | SelfContainedJobResult | RenderSendJobResult
 
 export function isBotActionResult(v: unknown): v is BotActionJobResult {
   return (
@@ -42,5 +42,22 @@ export function isSelfContainedResult(v: unknown): v is SelfContainedJobResult {
     v !== null &&
     'type' in v &&
     (v as Record<string, unknown>).type === 'self-contained'
+  )
+}
+
+/** 渲染发图 job result —— processor 写图到 Redis temp key，主进程取图后调用 BotAPI。 */
+export interface RenderSendJobResult {
+  type: 'render-send'
+  /** Redis temp key，存储渲染后的 base64 PNG，60s TTL。 */
+  tempKey: string
+  sendTo: { groupId: number } | { userId: number }
+}
+
+export function isRenderSendResult(v: unknown): v is RenderSendJobResult {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    'type' in v &&
+    (v as Record<string, unknown>).type === 'render-send'
   )
 }
