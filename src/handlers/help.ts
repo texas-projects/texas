@@ -3,6 +3,7 @@
  */
 
 import { getLogger } from '@logger'
+import { Queue } from 'bullmq'
 
 import {
   type Context,
@@ -103,9 +104,7 @@ async function handleList(
   }
 
   try {
-    const { Queue: QueueClass } = await import('bullmq')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    const queue = ctx.getService(QueueClass as any)
+    const queue = ctx.getService(Queue)
     await enqueueRender(queue, {
       template: 'help',
       data: helpData,
@@ -145,9 +144,7 @@ async function handleDetail(
   }
 
   try {
-    const { Queue: QueueClass } = await import('bullmq')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-    const queue = ctx.getService(QueueClass as any)
+    const queue = ctx.getService(Queue)
     await enqueueRender(queue, {
       template: 'help',
       data: helpData,

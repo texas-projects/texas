@@ -7,7 +7,7 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "packageManager": "pnpm@11.5.2",
+  "packageManager": "pnpm@11.6.0",
   "scripts": {
     "aemeath": "tsx scripts/cli/main.ts",
     "dev": "cross-env NODE_ENV=development LOG_FORMAT=console nodemon",
@@ -51,7 +51,6 @@
     "@fontsource/noto-sans-jp": "^5.2.9",
     "@fontsource/noto-sans-kr": "^5.2.9",
     "@langchain/openai": "^1.4.7",
-    "@mongodb-js/zstd": "^7.0.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@resvg/resvg-js": "^2.6.2",

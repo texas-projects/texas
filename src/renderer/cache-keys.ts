@@ -6,7 +6,7 @@ cacheKeyRegistry.register({
   namespace: 'render',
   name: 'result',
   build: (hash: string) => `aemeath:render:result:${hash}`,
-  description: '渲染结果缓存（zstd 压缩 base64）',
+  description: 'S3 key of cached render result',
 })
 
 cacheKeyRegistry.register({

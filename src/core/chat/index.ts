@@ -3,11 +3,18 @@
  */
 
 import { logger, type Logger } from '@logger'
+import type { Client } from 'minio'
 
 import type { ChatMessage } from '#prisma/chat'
 
-import type { ChatPrismaClient } from '@/core/db.js'
+import { ArchiveService } from './archive.js'
+import type { MediaStorageService } from './media.js'
+import { ArchiveS3 } from './s3.js'
+
+import { loadConfig } from '@/core/config.js'
+import type { ChatPrismaClient, MainPrismaClient } from '@/core/db.js'
 import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
+import type { OssBuckets } from '@/core/oss/client.js'
 
 export type { ChatMessage }
 
@@ -64,7 +71,10 @@ export interface MessageContext {
 export class ChatHistoryService {
   private readonly _log: Logger = logger.child({ name: 'ChatHistoryService' })
 
-  constructor(private readonly chatDb: ChatPrismaClient) {}
+  constructor(
+    private readonly chatDb: ChatPrismaClient,
+    private readonly mediaStorage?: MediaStorageService,
+  ) {}
 
   // ════════════════════════════════════════════
   //  写入
@@ -88,6 +98,12 @@ export class ChatHistoryService {
     createdAt: Date
   }): Promise<void> {
     try {
+      // 媒体持久化：对 segments 中 type=image 的项上传到 S3
+      let processedSegments = data.segments
+      if (this.mediaStorage && Array.isArray(data.segments)) {
+        processedSegments = await this._persistMediaSegments(data.segments)
+      }
+
       await this.chatDb.chatMessage.create({
         data: {
           messageId: data.messageId,
@@ -95,7 +111,7 @@ export class ChatHistoryService {
           groupId: data.groupId ?? null,
           userId: data.userId,
           rawMessage: data.rawMessage,
-          segments: data.segments ?? {},
+          segments: processedSegments ?? {},
           senderNickname: data.senderNickname,
           senderCard: data.senderCard ?? null,
           senderRole: data.senderRole ?? null,
@@ -242,6 +258,35 @@ export class ChatHistoryService {
     return { items, total }
   }
 
+  /** 提取 segments 中的图片 URL，持久化到 S3，并在 segment 中新增 s3Key 字段。 */
+  private async _persistMediaSegments(segments: unknown[]): Promise<unknown[]> {
+    const imageUrls: string[] = []
+    for (const seg of segments) {
+      if (typeof seg === 'object' && seg !== null && 'type' in seg) {
+        const s = seg as Record<string, unknown>
+        if (s.type === 'image' && typeof s.url === 'string') {
+          imageUrls.push(s.url)
+        }
+      }
+    }
+
+    if (imageUrls.length === 0) return segments
+
+    if (!this.mediaStorage) return segments
+    const mapping = await this.mediaStorage.persistMany(imageUrls)
+
+    return segments.map((seg) => {
+      if (typeof seg === 'object' && seg !== null && 'type' in seg) {
+        const s = seg as Record<string, unknown>
+        if (s.type === 'image' && typeof s.url === 'string') {
+          const s3Key = mapping.get(s.url)
+          if (s3Key) return { ...s, s3Key }
+        }
+      }
+      return seg
+    })
+  }
+
   /** 关闭数据库连接。 */
   async close(): Promise<void> {
     await this.chatDb.$disconnect()
@@ -250,12 +295,28 @@ export class ChatHistoryService {
 
 // ── 生命周期注册 ──
 
-Startup({ name: 'chat', provides: ['chat_service'], requires: ['chat_db'] })(async function (
-  deps: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
+Startup({
+  name: 'chat',
+  provides: ['chat_service', 'archive_service'],
+  requires: ['chat_db', 'db', 'oss', 'media_storage'],
+})(async function (deps: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const config = loadConfig()
   const chatDb = deps.chat_db as ChatPrismaClient
-  const service = new ChatHistoryService(chatDb)
-  return { chat_service: service }
+  const mainDb = deps.db as MainPrismaClient
+  const { client, buckets } = deps.oss as { client: Client; buckets: OssBuckets }
+  const mediaStorage = deps.media_storage as MediaStorageService | undefined
+
+  const service = new ChatHistoryService(chatDb, mediaStorage)
+
+  const exporterSettings = {
+    retentionMonths: 12,
+    batchSize: 5000,
+    compression: 'zstd' as const,
+  }
+  const archiveS3 = new ArchiveS3(client, buckets.archive, config.S3_ARCHIVE_PREFIX)
+  const archiveService = new ArchiveService(chatDb, mainDb, exporterSettings, archiveS3)
+
+  return { chat_service: service, archive_service: archiveService }
 })
 
 Shutdown({ name: 'chat' })(async function (services: Record<string, unknown>): Promise<void> {

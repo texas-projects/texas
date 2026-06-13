@@ -3,17 +3,7 @@
  */
 
 import { logger, type Logger } from '@logger'
-import { Client as MinioClient } from 'minio'
-
-/** S3 归档配置（从外部注入，对应环境变量）。 */
-export interface S3Settings {
-  endpointUrl: string
-  accessKeyId: string
-  secretAccessKey: string
-  region: string
-  archiveBucket: string
-  archivePrefix: string
-}
+import type { Client as MinioClient } from 'minio'
 
 /** Parquet 归档 manifest 结构。 */
 export interface ArchiveManifest {
@@ -36,80 +26,54 @@ export interface ArchiveManifest {
 /**
  * 负责 S3 文件上传操作，与归档编排逻辑解耦。
  *
- * 使用 minio npm 客户端，兼容 MinIO 和 AWS S3。
+ * 接收外部注入的 MinIO Client 实例（由 OSS Startup 统一管理）。
  */
 export class ArchiveS3 {
-  private readonly client: MinioClient
-  private readonly settings: S3Settings
   private readonly _log: Logger = logger.child({ name: 'ArchiveS3' })
 
-  constructor(settings: S3Settings) {
-    this.settings = settings
-
-    // 解析 endpointUrl，提取 host / port / useSSL
-    let endpointHost = 's3.amazonaws.com'
-    let endpointPort = 443
-    let useSSL = true
-
-    if (settings.endpointUrl) {
-      const parsed = new URL(settings.endpointUrl)
-      endpointHost = parsed.hostname
-      endpointPort = parsed.port ? Number(parsed.port) : parsed.protocol === 'https:' ? 443 : 80
-      useSSL = parsed.protocol === 'https:'
-    }
-
-    this.client = new MinioClient({
-      endPoint: endpointHost,
-      port: endpointPort,
-      useSSL,
-      accessKey: settings.accessKeyId,
-      secretKey: settings.secretAccessKey,
-      region: settings.region,
-    })
-  }
-
-  /** 返回当前 S3 配置（只读）。 */
-  getSettings(): Readonly<S3Settings> {
-    return this.settings
-  }
+  constructor(
+    private readonly client: MinioClient,
+    readonly bucket: string,
+    readonly prefix: string,
+  ) {}
 
   /**
    * 确保 bucket 存在，不存在时自动创建。
    */
-  async ensureBucket(bucket: string): Promise<void> {
-    const exists = await this.client.bucketExists(bucket)
+  async ensureBucket(bucketName: string): Promise<void> {
+    const exists = await this.client.bucketExists(bucketName)
     if (!exists) {
-      await this.client.makeBucket(bucket, this.settings.region)
+      await this.client.makeBucket(bucketName)
     }
   }
 
   /**
    * 上传 Buffer 到 S3 指定路径。
    */
-  async upload(bucket: string, key: string, data: Buffer): Promise<void> {
-    await this.ensureBucket(bucket)
-    await this.client.putObject(bucket, key, data, data.length)
+  async upload(bucketName: string, key: string, data: Buffer): Promise<void> {
+    await this.ensureBucket(bucketName)
+    await this.client.putObject(bucketName, key, data, data.length)
   }
 
   /**
-   * 上传本地文件到 S3。
+   * 上传本地文件到 S3（使用注入的 bucket）。
    */
   async uploadFile(
     filePath: string,
     s3Key: string,
     metadata: Record<string, string>,
   ): Promise<void> {
-    await this.ensureBucket(this.settings.archiveBucket)
-    await this.client.fPutObject(this.settings.archiveBucket, s3Key, filePath, metadata)
-    this._log.info({ bucket: this.settings.archiveBucket, key: s3Key }, '文件已上传至 S3')
+    await this.ensureBucket(this.bucket)
+    await this.client.fPutObject(this.bucket, s3Key, filePath, metadata)
+    this._log.info({ bucket: this.bucket, key: s3Key }, '文件已上传至 S3')
   }
 
   /**
-   * 上传 manifest.json 到 S3。
+   * 上传 manifest.json 到 S3（使用注入的 bucket）。
    */
   async uploadManifest(manifest: ArchiveManifest, s3Key: string): Promise<void> {
     const body = Buffer.from(JSON.stringify(manifest, null, 2), 'utf-8')
-    await this.upload(this.settings.archiveBucket, s3Key, body)
+    await this.upload(this.bucket, s3Key, body)
   }
 
   /**

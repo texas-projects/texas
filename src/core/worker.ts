@@ -16,6 +16,8 @@ import { createMainDb, createChatDb } from './db.js'
 import { loadEchoConfig } from './echo/config.js'
 import { EchoLoader } from './echo/loader.js'
 import type { TaskEchoEntry } from './echo/loader.js'
+import { createOssClient } from './oss/client.js'
+import type { OssBuckets } from './oss/client.js'
 import { createRedis, createBullMQConnection } from './redis/factory.js'
 import { RedisStore } from './redis/store.js'
 import { WorkerHeartbeatMiddleware } from './tasks/middleware.js'
@@ -40,7 +42,24 @@ async function main(): Promise<void> {
   const cacheRedis = createRedis(config.CACHE_REDIS_URL)
   const cacheStore = new RedisStore(cacheRedis, config.CACHE_DEFAULT_TTL)
 
-  const infraDeps: Record<string, unknown> = { db, chat_db: chatDb, cache: cacheStore }
+  const ossClient = createOssClient({
+    endpointUrl: config.S3_ENDPOINT_URL,
+    accessKeyId: config.S3_ACCESS_KEY_ID,
+    secretAccessKey: config.S3_SECRET_ACCESS_KEY,
+    region: config.S3_REGION,
+  })
+  const ossBuckets: OssBuckets = {
+    archive: config.S3_ARCHIVE_BUCKET,
+    media: config.S3_MEDIA_BUCKET,
+    render: config.S3_RENDER_BUCKET,
+  }
+
+  const infraDeps: Record<string, unknown> = {
+    db,
+    chat_db: chatDb,
+    cache: cacheStore,
+    oss: { client: ossClient, buckets: ossBuckets },
+  }
 
   // ── EchoLoader 动态发现任务 ──
 

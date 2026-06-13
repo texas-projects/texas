@@ -8,7 +8,7 @@ import type { ArchiveStatus } from '#prisma/main'
 
 import { ArchiveExporter, PARTITION_NAME_RE } from './exporter.js'
 import type { ArchiveExporterSettings } from './exporter.js'
-import { ArchiveS3, type S3Settings } from './s3.js'
+import { ArchiveS3 } from './s3.js'
 
 import type { ChatPrismaClient, MainPrismaClient } from '@/core/db.js'
 
@@ -40,17 +40,15 @@ export interface ArchiveJobData {
  */
 export class ArchiveService {
   private readonly exporter: ArchiveExporter
-  private readonly s3: ArchiveS3
   private readonly _log: Logger = logger.child({ name: 'ArchiveService' })
 
   constructor(
     private readonly chatDb: ChatPrismaClient,
     private readonly mainDb: MainPrismaClient,
     private readonly exporterSettings: ArchiveExporterSettings,
-    s3Settings: S3Settings,
+    private readonly s3: ArchiveS3,
   ) {
     this.exporter = new ArchiveExporter(chatDb, exporterSettings)
-    this.s3 = new ArchiveS3(s3Settings)
   }
 
   // ════════════════════════════════════════════
@@ -229,7 +227,7 @@ export class ArchiveService {
         partitionName,
         periodStart,
         periodEnd,
-        s3Bucket: this.s3.getSettings().archiveBucket,
+        s3Bucket: this.s3.bucket,
         s3Key: '',
         s3Sha256: '',
         status: 'pending',
@@ -256,7 +254,7 @@ export class ArchiveService {
 
       const yearPadded = year.toString().padStart(4, '0')
       const monthPadded = month.toString().padStart(2, '0')
-      const s3Key = `${this.s3.getSettings().archivePrefix}/${yearPadded}/${monthPadded}/${partitionName}.parquet`
+      const s3Key = `${this.s3.prefix}/${yearPadded}/${monthPadded}/${partitionName}.parquet`
 
       await this.s3.uploadFile(tmpPath, s3Key, {
         partition: partitionName,

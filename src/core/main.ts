@@ -13,6 +13,7 @@ import fastifyWebsocket from '@fastify/websocket'
 import { createLogger, setLogger, logger, getLogger } from '@logger'
 import Fastify, { type FastifyInstance, type FastifyPluginAsync } from 'fastify'
 import type { Redis } from 'ioredis'
+import type { Client } from 'minio'
 
 import pkg from '../../package.json' with { type: 'json' }
 
@@ -32,6 +33,7 @@ import { LifecycleOrchestrator } from './lifecycle/orchestrator.js'
 import { getAllStartups, getAllShutdowns } from './lifecycle/registry.js'
 import { ServiceRegistry } from './lifecycle/service-registry.js'
 import { metricsRegistry } from './monitoring/metrics.js'
+import type { OssBuckets } from './oss/client.js'
 import { authPlugin } from './plugins/auth.js'
 import { corsPlugin } from './plugins/cors.js'
 import { swaggerPlugin } from './plugins/swagger.js'
@@ -45,6 +47,10 @@ import { ConnectionManager } from './ws/connection.js'
 import { registerWsRoute } from './ws/server.js'
 // 触发 PersonnelService 的 Startup 注册（EchoLoader 不扫描 src/core/，需手动引入）
 import '@/core/personnel/index.js'
+// 触发 OSS 模块的 Startup 注册
+import '@/core/oss/bootstrap.js'
+// 触发 MediaStorageService 的 Startup 注册
+import '@/core/chat/media.js'
 
 // ── 内部状态类型 ──
 
@@ -63,6 +69,8 @@ interface AppState {
   // 任务
   taskExecutor: TaskExecutor
   queue: ReturnType<typeof getTaskQueue>
+  // OSS
+  oss?: { client: Client; buckets: OssBuckets }
   // 服务注册表（API 路由通过此访问业务服务）
   serviceRegistry: ServiceRegistry
   // 业务服务（由 orchestrator 填充）

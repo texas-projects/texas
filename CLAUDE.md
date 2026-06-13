@@ -146,49 +146,44 @@ docker build -t aemeath:latest .
   - 生成客户端: `prisma/chat/generated/`（gitignore，运行 `pnpm db:generate` 生成）
 - 修改任意 `.prisma` 文件后必须执行 `pnpm db:generate` 重新生成客户端
 
-### 事件驱动框架 (`src/core/framework/`)
+### 事件驱动框架 (`src/core/dispatch/`)
 
 核心事件分发采用职责链模式：
 
 - `EventDispatcher` → `CompositeHandlerMapping` → 具体 Mapping 策略
 - 内置路由策略：`CommandHandlerMapping`（`/cmd`）、`RegexHandlerMapping`、`KeywordHandlerMapping`、`StartsWith`、`EndsWith`、`FullMatch`、`EventTypeHandlerMapping` 等
-- `EchoLoader` 根据根目录 `aemeath.config.ts` 配置动态 import 各类型目录，装饰器副作用自动注册组件
+- `EchoLoader`（`src/core/echo/`）根据根目录 `aemeath.config.ts` 配置动态 import 各类型目录，装饰器副作用自动注册组件
 - 系统级功能（如 `personnel`）内聚于对应领域包（如 `src/core/personnel/`）
 - 拦截器：`LoggingInterceptor`（Pino 结构化日志）、`MetricsInterceptor`（Prometheus）、`SessionInterceptor`（多轮会话）
 
 ### Handler 开发约定
 
-新 handler 使用 TypeScript 装饰器（注意：**PascalCase**）：
+新 handler 使用函数调用形式注册（从 `@/core/dispatch/index.js` 导入）：
 
 ```typescript
-import type { Context } from '../core/framework/context.js'
-import {
-  Component,
-  OnCommand,
-  OnKeyword,
-  Permission,
-  MessageScope,
-} from '../core/framework/decorators.js'
+import { type Context, handler, OnCommand, OnKeyword, Permission, MessageScope, SettingNode } from '@/core/dispatch/index.js'
 
-@Component({
-  name: 'echo',
-  displayName: '回声',
-  description: '复读用户消息',
-  defaultEnabled: true,
-})
 class EchoHandler {
-  @OnCommand('echo', { permission: Permission.ANYONE, scope: MessageScope.GROUP })
   async handle(ctx: Context): Promise<void> {
     await ctx.reply(ctx.text)
   }
 }
+
+// 注册路由
+OnCommand('echo', { permission: Permission.ANYONE, scope: MessageScope.GROUP })(
+  EchoHandler.prototype.handle
+)
+
+// 注册 handler 元数据（同时写入 handlerRegistry，供权限管理页面使用）
+handler({ name: 'echo', displayName: '回声', description: '复读用户消息', tags: ['fun'] })(EchoHandler)
+
+// 通过 SettingNode 暴露可配置项（取代旧的 defaultEnabled）
+SettingNode('echo.enabled', { type: 'boolean', default: false, description: '是否启用回声功能' })(EchoHandler)
 ```
 
-- `@Component` 同时在 `handlerRegistry` 中注册功能元数据（用于权限管理页面）
-- `defaultEnabled: false`（默认值）意味着管理员需在前端手动开启该功能
 - `system: true` 的功能强制启用且不暴露给前端
-- 可用装饰器：`@OnCommand`、`@OnRegex`、`@OnKeyword`、`@OnStartsWith`、`@OnEndsWith`、`@OnFullMatch`、`@OnEvent`、`@OnNotice`、`@OnRequest`、`@OnMessageSent`、`@OnPoke`、`@OnEssence`、`@OnBotOffline`
-- 交互式多轮会话见 `src/core/framework/session/`
+- 可用路由函数：`OnCommand`、`OnRegex`、`OnKeyword`、`OnStartsWith`、`OnEndsWith`、`OnFullMatch`、`OnEvent`、`OnNotice`、`OnRequest`、`OnMessageSent`、`OnPoke`、`OnEssence`、`OnBotOffline`
+- 交互式多轮会话见 `src/core/session/`
 
 ### 生命周期编排 (`src/core/lifecycle/`)
 
@@ -216,9 +211,9 @@ Shutdown({ name: 'my_service' })(async (services: Record<string, unknown>): Prom
 
 基础设施 key（可在 `requires` 中直接使用）：`db`、`chat_db`、`cache`、`persistent`、`cache_redis`、`persistent_redis`、`bot_api`、`conn_mgr`、`dispatcher`、`queue`
 
-业务服务 key（由 Startup 注册后可用）：`renderer`、`settings`、`settings_checker`、`personnelService` 等
+业务服务 key（由 Startup 注册后可用）：`oss`、`media_storage`、`task_scheduler`、`chat_service`、`archive_service`、`renderer`、`settings`、`settings_checker`、`personnelService` 等
 
-`EchoLoader` 按 `aemeath.config.ts` 的 `echoes` 配置扫描各目录（默认：`handler→src/handlers`、`service→src/services,src/render-templates`、`task→src/tasks`、`route→src/apis`），import 触发装饰器副作用自动注册到注册表。
+`EchoLoader`（`src/core/echo/`）按 `aemeath.config.ts` 的 `echoes` 配置扫描各目录（默认：`handler→src/handlers`、`service→src/services`、`task→src/tasks`、`route→src/apis`），import 触发副作用自动注册到注册表。
 
 ### 依赖注入模式
 
@@ -231,34 +226,34 @@ Shutdown({ name: 'my_service' })(async (services: Record<string, unknown>): Prom
 ```
 src/
 ├── core/        # 框架基础设施
-│   ├── cache/       # Redis 缓存客户端；cache key 统一由 `cacheKeyRegistry`（`src/core/registries/cache-key.ts`）管理
-│   ├── chat/        # 聊天领域（archive、exporter、s3、main）
-│   ├── db/          # Prisma 客户端 + schema 文件 + 生成代码
-│   ├── framework/   # 事件分发框架（dispatcher、mapping、decorators、loader、session）
-│   ├── lifecycle/   # 生命周期编排（orchestrator、registry）
+│   ├── chat/        # 聊天领域（archive、exporter、media、s3、main）
+│   ├── dispatch/    # 事件分发框架（dispatcher、mapping、decorators、registry、context）
+│   ├── echo/        # EchoLoader 扫描加载器（config、loader）
+│   ├── lifecycle/   # 生命周期编排（orchestrator、registry、service-registry）
 │   ├── llm/         # LLM 领域（api、client、completion、schemas）
 │   ├── logging/     # Pino 日志配置 + 广播（SSE 推送）
 │   ├── monitoring/  # Prometheus 指标
+│   ├── oss/         # OSS/MinIO 客户端（client、utils、bootstrap）
 │   ├── personnel/   # 人员领域（api、events、query、sync）
 │   ├── protocol/    # OneBot 11 协议模型与 API 封装
-│   ├── registries/  # 功能/权限/服务/配置注册表
+│   ├── redis/       # Redis 工厂、cacheKeyRegistry、RedisStore、分布式锁
+│   ├── session/     # 交互式多轮会话（manager、state-machine、context）
 │   ├── settings/    # 设置领域（SettingsService、SettingsPermissionChecker，Startup key: settings）
-│   ├── tasks/       # BullMQ broker、TaskExecutor、任务模型
-│   ├── utils/       # 工具函数（helpers、md2img、redis-factory、response）
-│   └── ws/          # WebSocket 连接管理（connection、heartbeat、server）
+│   ├── tasks/       # BullMQ broker、TaskExecutor、scheduler、任务模型
+│   ├── ws/          # WebSocket 连接管理（connection、heartbeat、server）
 │   config.ts        # 环境变量校验（TypeBox ConfigSchema）
-│   lifespan.ts      # 启动/关闭编排
+│   db.ts            # Prisma 客户端工厂
 │   main.ts          # Fastify 应用入口
-│   version.ts       # 版本常量
+│   registries.ts    # 注册表聚合导出（handlerRegistry、cacheKeyRegistry 等）
 │   worker.ts        # BullMQ Worker 进程入口
 ├── apis/        # HTTP API 路由（Fastify 路由 + TypeBox schema）
 │   ├── plugins/     # Fastify 插件（auth、cors、swagger）
 │   ├── schemas/     # 请求/响应 TypeBox schema
 │   └── router.ts    # 路由聚合注册
 ├── handlers/    # Bot 事件处理器（EchoLoader 自动扫描）
-├── services/    # 功能业务服务（含 renderer/，@Startup/@Shutdown 注册）
-├── tasks/       # BullMQ 任务处理器（daily-checkin、daily-like）
-├── render-templates/  # 渲染模板（EchoLoader service 类型扫描）
+├── renderer/    # Satori + resvg-js 渲染服务（service、templates、fonts、cache-keys）
+├── services/    # 功能业务服务（@Startup/@Shutdown 注册）
+├── tasks/       # BullMQ 任务处理器（daily-checkin、daily-like、chat-archive、render 等）
 ├── types/       # 全局类型扩展（fastify.d.ts 等）
 aemeath.config.ts    # EchoLoader 扫描路径配置（echoes: handler/service/task/route）
 ```
@@ -269,12 +264,30 @@ aemeath.config.ts    # EchoLoader 扫描路径配置（echoes: handler/service/t
 
 | 文件          | 职责                                     |
 | ------------- | ---------------------------------------- |
-| `main.ts`     | `ChatHistoryService`：聊天记录存储、查询 |
+| `main.ts`     | `ChatHistoryService`：聊天记录存储、查询（Startup key: `chat_service`、`archive_service`）|
 | `archive.ts`  | `ArchiveService`：按月分区、S3 归档      |
 | `exporter.ts` | `ArchiveExporter`：Parquet 流式导出      |
+| `media.ts`    | `MediaStorageService`：媒体下载持久化到 OSS，SHA-256 去重（Startup key: `media_storage`）|
 | `s3.ts`       | `ArchiveS3`：S3 归档上传                 |
 
-**`src/core/llm/`** — LLM 领域
+**`src/core/oss/`** — OSS/MinIO 客户端
+
+| 文件            | 职责                                               |
+| --------------- | -------------------------------------------------- |
+| `client.ts`     | `createOssClient()`：解析 `S3_ENDPOINT_URL` 创建 MinIO Client |
+| `utils.ts`      | `uploadBuffer`/`downloadBuffer`/`objectExists`/`deleteObject` |
+| `bootstrap.ts`  | Startup 注册（key: `oss`）：初始化客户端并确保 bucket 存在 |
+
+**`src/core/redis/`** — Redis 基础设施
+
+| 文件            | 职责                                               |
+| --------------- | -------------------------------------------------- |
+| `factory.ts`    | `createRedis()`/`createBullMQConnection()`         |
+| `registry.ts`   | `cacheKeyRegistry`：全局 cache key 定义注册表      |
+| `store.ts`      | `RedisStore`：通用 Redis KV 存储封装               |
+| `lock.ts`       | `RedisLock`：分布式锁                              |
+
+
 
 | 文件            | 职责                                         |
 | --------------- | -------------------------------------------- |
@@ -304,7 +317,12 @@ aemeath.config.ts    # EchoLoader 扫描路径配置（echoes: handler/service/t
 | `daily-checkin.ts` | `DailyCheckinService` | 群签到（定时触发，RPC 桥接）                      |
 | `checkin.ts`       | `CheckinService`      | 群签到业务逻辑（积分、排行、汇总）                |
 | `drift-bottle.ts`  | `DriftBottleService`  | 漂流瓶（扔/捞、多池管理）                         |
-| `scheduler.ts`     | `registerScheduledJobs` | BullMQ Job Scheduler 注册四条定时任务（签到、点赞、归档、分区预建）|
+
+> 注：定时任务调度器已迁移至 `src/core/tasks/scheduler.ts`（Startup key: `task_scheduler`），负责注册四条 BullMQ 定时任务（签到、点赞、归档、分区预建）。
+
+- **`src/core/cache/`** → 已整合为 **`src/core/redis/`**（`cacheKeyRegistry` 在 `src/core/redis/registry.ts`，通过 `src/core/registries.ts` 聚合导出）
+- **`src/core/framework/`** → 已拆分为 `src/core/dispatch/`（路由/装饰器）、`src/core/echo/`（EchoLoader）、`src/core/session/`（多轮会话）
+- **`src/render-templates/`** → 已重命名为 `src/renderer/`
 
 ### 异步任务（BullMQ）
 

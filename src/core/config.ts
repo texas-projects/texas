@@ -59,11 +59,6 @@ export const ConfigSchema = Type.Object({
     minimum: 1,
     description: '渲染结果 Redis 缓存 TTL（秒）',
   }),
-  RENDER_CACHE_MAX_BYTES: Type.Number({
-    default: 1_048_576,
-    minimum: 1,
-    description: '渲染结果缓存 size guard 阈值（字节），超过则跳过缓存',
-  }),
 
   // S3
   S3_ENDPOINT_URL: Type.String({ default: '' }),
@@ -72,6 +67,8 @@ export const ConfigSchema = Type.Object({
   S3_REGION: Type.String({ default: 'us-east-1' }),
   S3_ARCHIVE_BUCKET: Type.String({ default: 'aemeath-archive' }),
   S3_ARCHIVE_PREFIX: Type.String({ default: 'chat-archive' }),
+  S3_MEDIA_BUCKET: Type.String({ default: 'aemeath-media' }),
+  S3_RENDER_BUCKET: Type.String({ default: 'aemeath-render' }),
 
   // 监控与日志
   METRICS_ENABLED: Type.Boolean({ default: true }),
