@@ -4,17 +4,16 @@
 
 import { logger } from '@logger'
 
-import type { Context } from '@/core/dispatch/context.js'
 import {
+  type Context,
   handler,
   OnStartsWith,
   OnFullMatch,
   MessageScope,
   Permission,
   SettingNode,
-} from '@/core/dispatch/decorators.js'
-import type { MessageSegment } from '@/core/protocol/models/segments.js'
-import { MessageBuilder, Seg } from '@/core/protocol/segment.js'
+} from '@/core/dispatch/index.js'
+import { MessageBuilder, Seg, type MessageSegment } from '@/core/protocol/index.js'
 import type { DriftBottleService } from '@/services/drift-bottle.js'
 
 const TRIGGER_THROW = '扔漂流瓶'

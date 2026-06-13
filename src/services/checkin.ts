@@ -11,8 +11,8 @@ import type { CheckinRecord } from '#prisma/main'
 
 import type { MainPrismaClient } from '@/core/db.js'
 import { isPrismaKnownError } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/registry.js'
-import type { RedisStore } from '@/core/redis/store.js'
+import { Startup } from '@/core/lifecycle/index.js'
+import type { RedisStore } from '@/core/redis/index.js'
 import { cacheKeyRegistry } from '@/core/registries.js'
 import { SHANGHAI_TZ } from '@/core/utils.js'
 

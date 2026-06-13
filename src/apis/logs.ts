@@ -4,7 +4,7 @@
 
 import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
-import { logBroadcaster } from '@/core/logging/broadcast.js'
+import { logBroadcaster } from '@/core/logging/index.js'
 
 /**
  * 日志 SSE 路由插件。

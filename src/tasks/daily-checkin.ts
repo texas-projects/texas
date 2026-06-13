@@ -3,12 +3,11 @@
 import type { Job } from 'bullmq'
 
 import type { MainPrismaClient } from '@/core/db.js'
-import type { RedisStore } from '@/core/redis/store.js'
+import type { RedisStore } from '@/core/redis/index.js'
 import { cacheKeyRegistry } from '@/core/registries.js'
-import type { MinimalSettingSchema } from '@/core/settings/query.js'
-import { getSettingValue } from '@/core/settings/query.js'
-import type { BotActionJobResult, PostCacheOp } from '@/core/tasks/models.js'
-import type { TaskDefinition } from '@/core/tasks/types.js'
+import type { MinimalSettingSchema } from '@/core/settings/index.js'
+import { getSettingValue } from '@/core/settings/index.js'
+import type { BotActionJobResult, PostCacheOp, TaskDefinition } from '@/core/tasks/index.js'
 
 export const JOB_NAME = 'daily-checkin' as const
 

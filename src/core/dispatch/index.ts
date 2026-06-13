@@ -45,5 +45,9 @@ export {
 } from './mapping.js'
 export type { HandlerMethod, ResolvedHandler } from './mapping.js'
 export { handlerRegistry, HandlerRegistry } from './registry.js'
-export type { HandlerRegistryEntry, MethodMeta } from './registry.js'
+export type {
+  HandlerRegistryEntry,
+  MethodMeta,
+  HandlerMeta as HandlerClassMeta,
+} from './registry.js'
 export type { HandlerInterceptor } from './interceptor.js'

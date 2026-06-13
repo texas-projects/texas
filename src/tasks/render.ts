@@ -7,10 +7,9 @@ import { compress, decompress } from '@mongodb-js/zstd'
 import { UnrecoverableError } from 'bullmq'
 
 import { loadConfig } from '@/core/config.js'
-import type { RedisStore } from '@/core/redis/store.js'
+import type { RedisStore } from '@/core/redis/index.js'
 import { cacheKeyRegistry } from '@/core/registries.js'
-import type { RenderSendJobResult } from '@/core/tasks/models.js'
-import type { TaskDefinition } from '@/core/tasks/types.js'
+import type { RenderSendJobResult, TaskDefinition } from '@/core/tasks/index.js'
 import { RenderService, TemplateNotFoundError, loadTemplates } from '@/renderer/index.js'
 
 import '@/renderer/cache-keys.js'

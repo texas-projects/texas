@@ -4,16 +4,16 @@
 
 import { logger } from '@logger'
 
-import type { Context } from '@/core/dispatch/context.js'
 import {
+  type Context,
   handler,
   OnCommand,
   OnKeyword,
   MessageScope,
   Permission,
   SettingNode,
-} from '@/core/dispatch/decorators.js'
-import { MessageBuilder } from '@/core/protocol/segment.js'
+} from '@/core/dispatch/index.js'
+import { MessageBuilder } from '@/core/protocol/index.js'
 import type { CheckinService } from '@/services/checkin.js'
 
 // ── 上海时区辅助 ──

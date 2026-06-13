@@ -3,8 +3,7 @@
 import type { Job } from 'bullmq'
 
 import type { ChatPrismaClient, MainPrismaClient } from '@/core/db.js'
-import type { SelfContainedJobResult } from '@/core/tasks/models.js'
-import type { TaskDefinition } from '@/core/tasks/types.js'
+import type { SelfContainedJobResult, TaskDefinition } from '@/core/tasks/index.js'
 
 export const JOB_NAME = 'chat-archive' as const
 

@@ -9,6 +9,8 @@ export type { SettingNodeSchema } from './schema.js'
 export { SettingsService } from './service.js'
 export type { SettingsScope } from './service.js'
 export { SettingsPermissionChecker } from './permission.js'
+export type { MinimalSettingSchema, SettingsQueryContext } from './query.js'
+export { getSettingValue } from './query.js'
 
 import type { Redis } from 'ioredis'
 

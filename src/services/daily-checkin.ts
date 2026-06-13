@@ -8,13 +8,13 @@
 import { logger, type Logger } from '@logger'
 
 import type { MainPrismaClient } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/registry.js'
-import type { BotAPI } from '@/core/protocol/api.js'
-import type { RedisStore } from '@/core/redis/store.js'
+import { Startup } from '@/core/lifecycle/index.js'
+import type { BotAPI } from '@/core/protocol/index.js'
+import type { RedisStore } from '@/core/redis/index.js'
 import { cacheKeyRegistry } from '@/core/registries.js'
-import type { SettingsService } from '@/core/settings/service.js'
+import type { SettingsService } from '@/core/settings/index.js'
 import { SHANGHAI_TZ } from '@/core/utils.js'
-import type { ConnectionManager } from '@/core/ws/connection.js'
+import type { ConnectionManager } from '@/core/ws/index.js'
 
 // ── 常量 ──
 

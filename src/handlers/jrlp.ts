@@ -4,15 +4,15 @@
 
 import { logger } from '@logger'
 
-import type { Context } from '@/core/dispatch/context.js'
 import {
+  type Context,
   handler,
   OnRegex,
   MessageScope,
   Permission,
   SettingNode,
-} from '@/core/dispatch/decorators.js'
-import { MessageBuilder } from '@/core/protocol/segment.js'
+} from '@/core/dispatch/index.js'
+import { MessageBuilder } from '@/core/protocol/index.js'
 import type { JrlpService } from '@/services/jrlp.js'
 
 // QQ 头像 URL 模板

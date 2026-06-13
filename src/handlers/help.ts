@@ -4,11 +4,15 @@
 
 import { getLogger } from '@logger'
 
-import type { Context } from '@/core/dispatch/context.js'
-import { handler, OnCommand, MessageScope } from '@/core/dispatch/decorators.js'
-import { handlerRegistry } from '@/core/dispatch/registry.js'
-import type { HandlerMeta } from '@/core/dispatch/registry.js'
-import { enqueueRender } from '@/core/utils/enqueue-render.js'
+import {
+  type Context,
+  handler,
+  OnCommand,
+  MessageScope,
+  handlerRegistry,
+  type HandlerClassMeta as HandlerMeta,
+} from '@/core/dispatch/index.js'
+import { enqueueRender } from '@/core/utils/index.js'
 import type { HelpData } from '@/renderer/templates/help.js'
 
 const log = getLogger('help')

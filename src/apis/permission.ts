@@ -7,7 +7,7 @@
 import type { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
 import { ok, fail } from '@/core/response.js'
-import type { SettingsService } from '@/core/settings/service.js'
+import type { SettingsService } from '@/core/settings/index.js'
 
 function getSettings(app: FastifyInstance): SettingsService {
   const state = (app as unknown as { state: Record<string, unknown> }).state

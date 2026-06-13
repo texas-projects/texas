@@ -5,7 +5,7 @@
 import { getLogger } from '@logger'
 import type { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
-import type { ServiceRegistry } from '@/core/lifecycle/service-registry.js'
+import type { ServiceRegistry } from '@/core/lifecycle/index.js'
 import { ok, fail } from '@/core/response.js'
 import type { JrlpService } from '@/services/jrlp.js'
 

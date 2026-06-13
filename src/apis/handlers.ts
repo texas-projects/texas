@@ -4,7 +4,7 @@
 
 import type { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
-import { handlerRegistry } from '@/core/dispatch/registry.js'
+import { handlerRegistry } from '@/core/dispatch/index.js'
 import { ok } from '@/core/response.js'
 
 /**

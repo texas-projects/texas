@@ -108,3 +108,5 @@ export function getLogger(name: string): Logger {
 }
 
 export type { Logger }
+
+export { LogBroadcaster, logBroadcaster } from './broadcast.js'

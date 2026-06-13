@@ -4,7 +4,7 @@
 
 import type { FastifyInstance, FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
-import type { ServiceRegistry } from '@/core/lifecycle/service-registry.js'
+import type { ServiceRegistry } from '@/core/lifecycle/index.js'
 import { ok } from '@/core/response.js'
 import type { LikeService } from '@/services/like.js'
 
