@@ -115,17 +115,6 @@ export class SessionContext {
     await this.reply(message)
   }
 
-  /** 从上下文获取服务实例（类型安全）。 */
-  getService<T>(constructor: new (...args: unknown[]) => T): T {
-    return this._ctx.getService(constructor)
-  }
-
-  /** 检查服务是否已注册。 */
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  hasService(constructor: Function): boolean {
-    return this._ctx.hasService(constructor)
-  }
-
   /** 获取消息纯文本。 */
   getPlaintext(): string {
     return this._ctx.getPlaintext()

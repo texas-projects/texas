@@ -20,17 +20,17 @@ import pkg from '../../package.json' with { type: 'json' }
 import { loadConfig } from './config.js'
 import { createMainDb, createChatDb } from './db.js'
 import { EventDispatcher } from './dispatch/dispatcher.js'
+import { buildHandlerMethod } from './dispatch/handler-method-builder.js'
 import { LoggingInterceptor } from './dispatch/interceptors/logging.js'
 import { SessionInterceptor } from './dispatch/interceptors/session.js'
 import { CompositeHandlerMapping } from './dispatch/mapping.js'
-import type { HandlerMethod, FeatureChecker } from './dispatch/mapping.js'
+import type { FeatureChecker } from './dispatch/mapping.js'
 import { handlerRegistry } from './dispatch/registry.js'
 import type { EchoConfig } from './echo/config.js'
 import { loadEchoConfig } from './echo/config.js'
 import { EchoLoader } from './echo/loader.js'
 import type { RouteEchoEntry, TaskEchoEntry } from './echo/loader.js'
 import { LifecycleOrchestrator } from './lifecycle/orchestrator.js'
-import { getAllStartups, getAllShutdowns } from './lifecycle/registry.js'
 import { ServiceRegistry } from './lifecycle/service-registry.js'
 import { metricsRegistry } from './monitoring/metrics.js'
 import type { OssBuckets } from './oss/client.js'
@@ -51,6 +51,9 @@ import '@/core/personnel/index.js'
 import '@/core/oss/bootstrap.js'
 // 触发 MediaStorageService 的 Startup 注册
 import '@/core/chat/media.js'
+
+// ── 模块级生命周期编排器（startup 创建，shutdown 复用同一实例）──
+let _orchestrator: LifecycleOrchestrator | null = null
 
 // ── 内部状态类型 ──
 
@@ -107,24 +110,17 @@ async function _loadEchoes(composite: CompositeHandlerMapping): Promise<EchoConf
 /** 遍历 HandlerRegistry，实例化所有组件并将处理器方法注册到 CompositeHandlerMapping。 */
 function _registerHandlersToMapping(composite: CompositeHandlerMapping): void {
   const log = getLogger('main')
-  for (const [componentName, entry] of handlerRegistry.entries()) {
-    const instance = new (entry.meta.target as new () => object)()
-    const defaultPriority = entry.meta.defaultPriority
+  for (const data of handlerRegistry.decoratorValues()) {
+    const instance = handlerRegistry.getInstance(data.options.name)
+    if (!instance) continue
 
     let handlerCount = 0
-    for (const methodMeta of entry.methods) {
-      const priority = methodMeta.priority ?? defaultPriority
-      composite.register({
-        instance,
-        method: methodMeta.method,
-        priority,
-        componentName,
-        meta: methodMeta as unknown as HandlerMethod['meta'],
-      })
+    for (const methodMeta of data.methods) {
+      composite.register(buildHandlerMethod(data, methodMeta, instance))
       handlerCount++
     }
 
-    log.info(`组件已注册：${componentName}，handler 数量：${String(handlerCount)}`)
+    log.info(`组件已注册：${data.options.name}，handler 数量：${String(handlerCount)}`)
   }
 }
 
@@ -211,12 +207,8 @@ async function _startup(
   const queue = getTaskQueue(bullConn)
   const queueName = echoConfig.app?.queueName ?? 'aemeath-tasks'
 
-  // 将 queue 注入 dispatcher.services，供 ctx.getService(Queue) 使用
-  const { Queue: QueueClass } = await import('bullmq')
-  dispatcher.services.set(QueueClass, queue)
-
   // 10. 生命周期编排器：按拓扑顺序启动所有业务模块
-  const orchestrator = new LifecycleOrchestrator()
+  _orchestrator = new LifecycleOrchestrator()
   const infraServices: Record<string, unknown> = {
     db: mainDb,
     chat_db: chatDb,
@@ -230,7 +222,10 @@ async function _startup(
     queue,
   }
 
-  const allServices = await orchestrator.startup(infraServices, getAllStartups())
+  const allServices = await _orchestrator.startup(infraServices)
+
+  // 10.1. 实例化所有新格式 handler（注入依赖）
+  handlerRegistry.instantiateAll(allServices)
 
   // 10.5. 注入 Settings 权限检查器到 Dispatcher（延迟绑定）
   const settingsChecker = allServices.settings_checker as FeatureChecker | undefined
@@ -286,10 +281,9 @@ async function _shutdown(app: FastifyInstance): Promise<void> {
   // 停止 TaskExecutor
   await state.taskExecutor.close()
 
-  // 关闭业务模块（@Shutdown 按启动逆序）
-  const orchestrator = new LifecycleOrchestrator()
+  // 关闭业务模块（@Shutdown 按启动逆序，复用 startup 时创建的同一编排器实例）
   try {
-    await orchestrator.shutdown(getAllShutdowns())
+    await _orchestrator?.shutdown()
   } catch (err) {
     app.log.error({ err }, '业务模块关闭时发生错误')
   }

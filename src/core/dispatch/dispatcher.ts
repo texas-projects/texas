@@ -24,19 +24,11 @@ import type { AnyOneBotEvent } from '@/core/protocol/models/events.js'
 export class EventDispatcher {
   private readonly _log = logger.child({ name: 'dispatcher' })
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  readonly services: Map<Function, unknown>
-
   constructor(
     private readonly mapping: CompositeHandlerMapping,
     private readonly interceptors: HandlerInterceptor[] = [],
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    services?: Map<Function, unknown>,
     private _featureChecker?: FeatureChecker,
-  ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    this.services = services ?? new Map<Function, unknown>()
-  }
+  ) {}
 
   /** 延迟注入权限检查器（在 Startup 完成后设置）。 */
   setFeatureChecker(checker: FeatureChecker): void {
@@ -45,7 +37,7 @@ export class EventDispatcher {
 
   /** 分发事件到匹配的处理器，依次运行拦截器链。 */
   async dispatch(event: AnyOneBotEvent, bot: BotAPI): Promise<void> {
-    const ctx = new Context(event, bot, this.services)
+    const ctx = new Context(event, bot)
 
     // 解析匹配的处理器
     const resolvedHandlers = this.mapping.resolve(event)

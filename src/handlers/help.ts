@@ -3,16 +3,12 @@
  */
 
 import { getLogger } from '@logger'
-import { Queue } from 'bullmq'
+import type { Queue } from 'bullmq'
 
-import {
-  type Context,
-  handler,
-  OnCommand,
-  MessageScope,
-  handlerRegistry,
-  type HandlerClassMeta as HandlerMeta,
-} from '@/core/dispatch/index.js'
+import { type Context } from '@/core/dispatch/context.js'
+import { Handler, OnCommand, Scope } from '@/core/dispatch/decorators/index.js'
+import { handlerRegistry, type HandlerMeta as HandlerClassMeta } from '@/core/dispatch/registry.js'
+import { Inject } from '@/core/lifecycle/decorators/index.js'
 import { enqueueRender } from '@/core/utils/index.js'
 import type { HelpData } from '@/renderer/templates/help.js'
 
@@ -49,7 +45,8 @@ async function fallbackText(ctx: Context): Promise<boolean> {
 async function handleList(
   ctx: Context,
   page: number,
-  allFeatures: HandlerMeta[],
+  allFeatures: HandlerClassMeta[],
+  queue: Queue,
 ): Promise<boolean> {
   const grouped = new Map<string, HelpItem[]>()
   for (const meta of allFeatures) {
@@ -104,7 +101,6 @@ async function handleList(
   }
 
   try {
-    const queue = ctx.getService(Queue)
     await enqueueRender(queue, {
       template: 'help',
       data: helpData,
@@ -122,7 +118,8 @@ async function handleList(
 async function handleDetail(
   ctx: Context,
   featureQuery: string,
-  allFeatures: HandlerMeta[],
+  allFeatures: HandlerClassMeta[],
+  queue: Queue,
 ): Promise<boolean> {
   const meta = allFeatures.find((c) => c.name === featureQuery || c.displayName === featureQuery)
 
@@ -144,7 +141,6 @@ async function handleDetail(
   }
 
   try {
-    const queue = ctx.getService(Queue)
     await enqueueRender(queue, {
       template: 'help',
       data: helpData,
@@ -158,39 +154,33 @@ async function handleDetail(
   return true
 }
 
-class HelpHandler {
-  /** 处理 /help 指令。 */
-  async showHelp(ctx: Context): Promise<boolean> {
-    const arg = ctx.getArgStr().trim()
-    const allFeatures: HandlerMeta[] = [...handlerRegistry.values()]
-      .map((entry) => entry.meta)
-      .filter((m) => !m.system)
-
-    if (!arg || /^\d+$/u.test(arg)) {
-      const page = arg ? parseInt(arg, 10) : 1
-      return handleList(ctx, page, allFeatures)
-    }
-
-    return handleDetail(ctx, arg, allFeatures)
-  }
-}
-
-// ── 装饰器注册 ──
-
-handler({
+@Handler({
   name: 'help',
   displayName: '帮助',
   description: '查看当前可用功能列表',
   tags: [],
   system: true,
-})(HelpHandler)
+})
+class HelpHandler {
+  @Inject('queue')
+  private readonly queue!: Queue
 
-OnCommand('/help', {
-  aliases: new Set(['/帮助', '/？']),
-  displayName: '功能帮助',
-  description: '查看当前可用功能列表，发送 /help <功能名> 查看子命令详情',
-  scope: MessageScope.ALL,
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(HelpHandler.prototype.showHelp)
+  /** 处理 /help 指令。 */
+  @OnCommand('/help', { aliases: ['/帮助', '/？'] })
+  @Scope('all')
+  async showHelp(ctx: Context): Promise<boolean> {
+    const arg = ctx.getArgStr().trim()
+    const allFeatures: HandlerClassMeta[] = [...handlerRegistry.values()]
+      .map((entry) => entry.meta)
+      .filter((m) => !m.system)
+
+    if (!arg || /^\d+$/u.test(arg)) {
+      const page = arg ? parseInt(arg, 10) : 1
+      return handleList(ctx, page, allFeatures, this.queue)
+    }
+
+    return handleDetail(ctx, arg, allFeatures, this.queue)
+  }
+}
 
 export { HelpHandler }

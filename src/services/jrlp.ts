@@ -6,7 +6,7 @@ import type { WifeRecord, Prisma } from '#prisma/main'
 
 import type { MainPrismaClient } from '@/core/db.js'
 import { isPrismaKnownError } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/index.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 
 export type { WifeRecord }
 
@@ -244,11 +244,18 @@ export class JrlpService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'jrlp',
-  provides: ['jrlp_service'],
-  requires: ['db'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  return { jrlp_service: new JrlpService(db) }
-})
+@Service({ name: 'jrlp_bootstrap' })
+export class JrlpBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
+
+  /** 对外暴露今日老婆服务实例 */
+  @Provide('jrlp_service')
+  jrlpService!: JrlpService
+
+  @Startup
+  start(): void {
+    this.jrlpService = new JrlpService(this.db)
+  }
+}

@@ -2,14 +2,15 @@
  * 点赞 Bot 处理器 —— 响应 /like 或 /点赞 命令。
  */
 
+import { type Context } from '@/core/dispatch/context.js'
 import {
-  type Context,
-  handler,
+  Handler,
   OnCommand,
-  MessageScope,
+  Scope,
   Permission,
   SettingNode,
-} from '@/core/dispatch/index.js'
+} from '@/core/dispatch/decorators/index.js'
+import { Inject } from '@/core/lifecycle/decorators/index.js'
 import type { LikeService } from '@/services/like.js'
 
 const DEFAULT_LIKE_TIMES = 10
@@ -21,30 +22,44 @@ const USAGE =
   '  /like cancel    取消定时点赞\n' +
   '  /like status    查看状态与统计'
 
+@Handler({
+  name: 'like',
+  displayName: '点赞',
+  description: '给自己 QQ 主页点赞，支持手动和每日定时自动点赞',
+  tags: ['fun'],
+})
+@SettingNode('enabled', {
+  type: 'boolean',
+  default: true,
+  description: '是否启用点赞功能',
+})
+@SettingNode('permission', {
+  type: 'enum',
+  default: 'ANYONE',
+  enumOptions: { ANYONE: 0, GROUP_MEMBER: 10, GROUP_ADMIN: 20, GROUP_OWNER: 30, ADMIN: 100 },
+  description: '最低权限等级',
+})
 class LikeHandler {
+  @Inject('like_service')
+  private readonly likeService!: LikeService
+
   /** 解析参数并分发到对应子命令。 */
-
+  @OnCommand('like', { aliases: ['点赞'] })
+  @Scope('all')
+  @Permission(0)
   async handle(ctx: Context): Promise<void> {
-    const { LikeService: LikeSvc } = await import('@/services/like.js')
-
-    if (!ctx.hasService(LikeSvc)) {
-      return
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument
-    const svc = ctx.getService(LikeSvc as any) as unknown as LikeService
     const qq = BigInt(ctx.userId)
     const args = ctx.getArgs()
     const sub = args[0]?.toLowerCase() ?? ''
 
     if (sub === 'schedule' || sub === '定时') {
-      await handleSchedule(ctx, svc, qq)
+      await handleSchedule(ctx, this.likeService, qq)
     } else if (sub === 'cancel' || sub === '取消') {
-      await handleCancel(ctx, svc, qq)
+      await handleCancel(ctx, this.likeService, qq)
     } else if (sub === 'status' || sub === '状态') {
-      await handleStatus(ctx, svc, qq)
+      await handleStatus(ctx, this.likeService, qq)
     } else if (sub === '' || /^\d+$/u.test(sub)) {
-      await handleSend(ctx, svc, qq, sub)
+      await handleSend(ctx, this.likeService, qq, sub)
     } else {
       await ctx.reply(USAGE)
     }
@@ -110,36 +125,5 @@ async function handleStatus(ctx: Context, svc: LikeService, qq: bigint): Promise
     `点赞状态\n${taskInfo}\n累计已点赞：${String(status.totalTimes)} 次\n最近点赞：${lastTime}`,
   )
 }
-
-// ── 装饰器注册 ──
-
-handler({
-  name: 'like',
-  displayName: '点赞',
-  description: '给自己 QQ 主页点赞，支持手动和每日定时自动点赞',
-  tags: ['fun'],
-})(LikeHandler)
-
-SettingNode('like.enabled', {
-  type: 'boolean',
-  default: true,
-  description: '是否启用点赞功能',
-})(LikeHandler)
-
-SettingNode('like.permission', {
-  type: 'enum',
-  default: 'ANYONE',
-  enumOptions: Permission,
-  description: '最低权限等级',
-})(LikeHandler)
-
-OnCommand('like', {
-  aliases: new Set(['点赞']),
-  permission: Permission.ANYONE,
-  scope: MessageScope.ALL,
-  displayName: '点赞',
-  description: '/like [n|schedule|cancel|status]',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(LikeHandler.prototype.handle)
 
 export { LikeHandler }

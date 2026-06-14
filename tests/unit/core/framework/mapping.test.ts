@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { MessageScope, Permission } from '@/core/dispatch/decorators.js'
+import { MessageScope, Permission } from '@/core/dispatch/constants.js'
 import type { HandlerMethod } from '@/core/dispatch/mapping.js'
 import {
   CommandHandlerMapping,

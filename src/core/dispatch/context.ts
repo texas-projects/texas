@@ -39,18 +39,17 @@ function isPrivateEvent(event: AnyOneBotEvent): boolean {
   )
 }
 
-type Constructor<T> = new (...args: unknown[]) => T
-
 /**
  * 事件处理上下文 —— 传递给拦截器和处理器。
  *
  * 包含：
  * - 当前事件（`event`）
  * - Bot API 客户端（`bot`）
- * - 服务注册表（`getService`）
  * - 正则匹配结果（`regexMatch`）
  * - 属性存储（供拦截器链传递数据）
  * - 消息辅助方法（`getPlaintext`、`getArgs`、`reply`、`finish` 等）
+ *
+ * 注意：服务依赖通过 @Inject 字段注入到 Handler 实例，Context 不再承担服务定位器职责。
  */
 export class Context {
   /** 触发本次事件的原始事件对象。 */
@@ -59,46 +58,12 @@ export class Context {
   /** Bot API 客户端。 */
   readonly bot: BotAPI
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  private readonly _services: Map<Function, unknown>
   private _regexMatch: RegExpMatchArray | null = null
   private readonly _attributes = new Map<string, unknown>()
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  constructor(event: AnyOneBotEvent, bot: BotAPI, services?: Map<Function, unknown>) {
+  constructor(event: AnyOneBotEvent, bot: BotAPI) {
     this.event = event
     this.bot = bot
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    this._services = services ?? new Map<Function, unknown>()
-  }
-
-  // ── 服务注册表 ──
-
-  /**
-   * 从上下文获取服务实例（类型安全）。
-   *
-   * 用法：
-   * ```ts
-   * const svc = ctx.getService(MyService)
-   * ```
-   */
-  getService<T>(constructor: Constructor<T>): T {
-    const service = this._services.get(constructor)
-    if (service === undefined) {
-      const available = [...this._services.keys()]
-        .map((k) => (k as { name?: string }).name ?? String(k))
-        .join(', ')
-      throw new Error(
-        `Service ${constructor.name} not registered in context. Available: ${available}`,
-      )
-    }
-    return service as T
-  }
-
-  /** 检查服务是否已注册。 */
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  hasService(constructor: Function): boolean {
-    return this._services.has(constructor)
   }
 
   // ── 属性存储（拦截器 <-> 处理器数据传递） ──

@@ -5,8 +5,8 @@
 import type { SettingNodeSchema } from './schema.js'
 import type { SettingsService } from './service.js'
 
+import { Permission } from '@/core/dispatch/constants.js'
 import type { Context } from '@/core/dispatch/context.js'
-import { Permission } from '@/core/dispatch/decorators.js'
 import type { FeatureChecker } from '@/core/dispatch/mapping.js'
 import { handlerRegistry } from '@/core/dispatch/registry.js'
 import type { PersonnelService } from '@/core/personnel/index.js'

@@ -18,7 +18,7 @@ import {
 
 import type { MainPrismaClient } from '@/core/db.js'
 import { NotFoundError } from '@/core/errors.js'
-import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
+import { Service, Inject, Provide, Startup, Shutdown } from '@/core/lifecycle/decorators/index.js'
 
 export type { LlmProvider, LlmModel }
 
@@ -345,15 +345,23 @@ export class LLMService {
 
 // ── 生命周期注册 ──
 
-Startup({ name: 'llm', provides: ['llm_service'], requires: ['main_db'] })(async function (
-  deps: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  const mainDb = deps.main_db as MainPrismaClient
-  const service = new LLMService(mainDb)
-  return { llm_service: service }
-})
+@Service({ name: 'llm_bootstrap' })
+export class LlmBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
 
-Shutdown({ name: 'llm' })(async function (services: Record<string, unknown>): Promise<void> {
-  const svc = services.llm_service as LLMService | undefined
-  svc?.close()
-})
+  /** 对外暴露 LLM 服务实例 */
+  @Provide('llm_service')
+  llmService!: LLMService
+
+  @Startup
+  start(): void {
+    this.llmService = new LLMService(this.db)
+  }
+
+  @Shutdown
+  stop(): void {
+    this.llmService.close()
+  }
+}

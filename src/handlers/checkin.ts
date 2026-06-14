@@ -4,15 +4,16 @@
 
 import { logger } from '@logger'
 
+import { type Context } from '@/core/dispatch/context.js'
 import {
-  type Context,
-  handler,
+  Handler,
   OnCommand,
   OnKeyword,
-  MessageScope,
+  Scope,
   Permission,
   SettingNode,
-} from '@/core/dispatch/index.js'
+} from '@/core/dispatch/decorators/index.js'
+import { Inject } from '@/core/lifecycle/decorators/index.js'
 import { MessageBuilder } from '@/core/protocol/index.js'
 import type { CheckinService } from '@/services/checkin.js'
 
@@ -23,25 +24,55 @@ function getTodayShanghai(): Date {
   return new Date(utc8.toISOString().slice(0, 10))
 }
 
+@Handler({
+  name: 'user_checkin',
+  displayName: '群签到',
+  description: '用户手动签到，回复今日本群排名和连续/累计天数',
+  tags: ['fun'],
+})
+@SettingNode('enabled', {
+  type: 'boolean',
+  default: true,
+  description: '是否启用群签到功能',
+})
+@SettingNode('permission', {
+  type: 'enum',
+  default: 'ANYONE',
+  enumOptions: { ANYONE: 0, GROUP_MEMBER: 10, GROUP_ADMIN: 20, GROUP_OWNER: 30, ADMIN: 100 },
+  description: '最低权限等级',
+})
 class CheckinHandler {
   private readonly _log = logger.child({ name: 'checkin' })
 
-  /** 处理用户签到请求，回复排名和连续/累计天数。 */
+  @Inject('user_checkin_service')
+  private readonly checkinService!: CheckinService
 
-  async handleCheckin(ctx: Context): Promise<boolean> {
-    const { CheckinService: CheckinSvc } = await import('@/services/checkin.js')
+  /** 处理用户签到请求（关键词触发）。 */
+  @OnKeyword(['签到'])
+  @Scope('group')
+  async handleCheckinKeyword(ctx: Context): Promise<boolean> {
+    return this._doCheckin(ctx)
+  }
 
-    if (!ctx.hasService(CheckinSvc) || ctx.groupId === undefined) {
+  /** 处理用户签到请求（命令触发）。 */
+  @OnCommand('签到')
+  @Scope('group')
+  @Permission(0)
+  async handleCheckinCommand(ctx: Context): Promise<boolean> {
+    return this._doCheckin(ctx)
+  }
+
+  /** 执行签到业务逻辑。 */
+  private async _doCheckin(ctx: Context): Promise<boolean> {
+    if (ctx.groupId === undefined) {
       return false
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument
-    const svc = ctx.getService(CheckinSvc as any) as unknown as CheckinService
     const today = getTodayShanghai()
 
     let result: Awaited<ReturnType<CheckinService['checkin']>>
     try {
-      result = await svc.checkin({
+      result = await this.checkinService.checkin({
         groupId: BigInt(ctx.groupId),
         userId: BigInt(ctx.userId),
         today,
@@ -74,42 +105,5 @@ class CheckinHandler {
     return true
   }
 }
-
-// ── 装饰器注册 ──
-
-handler({
-  name: 'user_checkin',
-  displayName: '群签到',
-  description: '用户手动签到，回复今日本群排名和连续/累计天数',
-  tags: ['fun'],
-})(CheckinHandler)
-
-SettingNode('user_checkin.enabled', {
-  type: 'boolean',
-  default: true,
-  description: '是否启用群签到功能',
-})(CheckinHandler)
-
-SettingNode('user_checkin.permission', {
-  type: 'enum',
-  default: 'ANYONE',
-  enumOptions: Permission,
-  description: '最低权限等级',
-})(CheckinHandler)
-
-OnKeyword(new Set(['签到']), {
-  scope: MessageScope.GROUP,
-  displayName: '签到（关键词）',
-  description: '发送「签到」触发',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(CheckinHandler.prototype.handleCheckin)
-
-OnCommand('签到', {
-  permission: Permission.ANYONE,
-  scope: MessageScope.GROUP,
-  displayName: '签到（命令）',
-  description: '发送「/签到」触发',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(CheckinHandler.prototype.handleCheckin)
 
 export { CheckinHandler }

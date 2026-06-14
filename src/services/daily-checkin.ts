@@ -8,7 +8,7 @@
 import { logger, type Logger } from '@logger'
 
 import type { MainPrismaClient } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/index.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 import type { BotAPI } from '@/core/protocol/index.js'
 import type { RedisStore } from '@/core/redis/index.js'
 import { cacheKeyRegistry } from '@/core/registries.js'
@@ -182,17 +182,40 @@ export class DailyCheckinService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'daily_checkin',
-  provides: ['daily_checkin_service'],
-  requires: ['db', 'cache', 'bot_api', 'conn_mgr', 'settings'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  const cache = deps.cache as RedisStore
-  const botApi = deps.bot_api as BotAPI
-  const connMgr = deps.conn_mgr as ConnectionManager
-  const settings = deps.settings as SettingsService
-  return {
-    daily_checkin_service: new DailyCheckinService(db, cache, botApi, connMgr, settings),
+@Service({ name: 'daily_checkin_bootstrap' })
+export class DailyCheckinBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
+
+  /** 注入缓存存储 */
+  @Inject('cache')
+  cache!: RedisStore
+
+  /** 注入 Bot API */
+  @Inject('bot_api')
+  botApi!: BotAPI
+
+  /** 注入 WebSocket 连接管理器 */
+  @Inject('conn_mgr')
+  connMgr!: ConnectionManager
+
+  /** 注入设置服务 */
+  @Inject('settings')
+  settings!: SettingsService
+
+  /** 对外暴露每日打卡服务实例 */
+  @Provide('daily_checkin_service')
+  dailyCheckinService!: DailyCheckinService
+
+  @Startup
+  start(): void {
+    this.dailyCheckinService = new DailyCheckinService(
+      this.db,
+      this.cache,
+      this.botApi,
+      this.connMgr,
+      this.settings,
+    )
   }
-})
+}

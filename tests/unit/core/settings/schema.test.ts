@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-deprecated */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { MainPrismaClient } from '@/core/db.js'

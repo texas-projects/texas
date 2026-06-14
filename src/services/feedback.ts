@@ -7,7 +7,7 @@ import { logger, type Logger } from '@logger'
 import type { Prisma, Feedback, FeedbackStatus, FeedbackSource, FeedbackType } from '#prisma/main'
 
 import type { MainPrismaClient } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/index.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 import type { BotAPI } from '@/core/protocol/index.js'
 
 export type { Feedback, FeedbackStatus, FeedbackSource, FeedbackType }
@@ -223,12 +223,22 @@ export class FeedbackService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'feedback',
-  provides: ['feedback_service'],
-  requires: ['db', 'bot_api'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  const botApi = deps.bot_api as BotAPI
-  return { feedback_service: new FeedbackService(db, botApi) }
-})
+@Service({ name: 'feedback_bootstrap' })
+export class FeedbackBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
+
+  /** 注入 Bot API */
+  @Inject('bot_api')
+  botApi!: BotAPI
+
+  /** 对外暴露反馈服务实例 */
+  @Provide('feedback_service')
+  feedbackService!: FeedbackService
+
+  @Startup
+  start(): void {
+    this.feedbackService = new FeedbackService(this.db, this.botApi)
+  }
+}

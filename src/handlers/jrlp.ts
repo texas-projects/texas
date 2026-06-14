@@ -4,14 +4,9 @@
 
 import { logger } from '@logger'
 
-import {
-  type Context,
-  handler,
-  OnRegex,
-  MessageScope,
-  Permission,
-  SettingNode,
-} from '@/core/dispatch/index.js'
+import { type Context } from '@/core/dispatch/context.js'
+import { Handler, OnRegex, Scope, SettingNode } from '@/core/dispatch/decorators/index.js'
+import { Inject } from '@/core/lifecycle/decorators/index.js'
 import { MessageBuilder } from '@/core/protocol/index.js'
 import type { JrlpService } from '@/services/jrlp.js'
 
@@ -25,25 +20,42 @@ function getTodayShanghai(): Date {
   return new Date(utc8.toISOString().slice(0, 10))
 }
 
+@Handler({
+  name: 'jrlp',
+  displayName: '今日老婆',
+  description: '每日群内随机抽取群老婆，每人每群每天一次',
+  tags: ['fun'],
+})
+@SettingNode('enabled', {
+  type: 'boolean',
+  default: true,
+  description: '是否启用今日老婆功能',
+})
+@SettingNode('permission', {
+  type: 'enum',
+  default: 'ANYONE',
+  enumOptions: { ANYONE: 0, GROUP_MEMBER: 10, GROUP_ADMIN: 20, GROUP_OWNER: 30, ADMIN: 100 },
+  description: '最低权限等级',
+})
 class JrlpHandler {
   private readonly _log = logger.child({ name: 'jrlp' })
 
+  @Inject('jrlp_service')
+  private readonly jrlpService!: JrlpService
+
   /** 随机抽取今日群老婆。 */
-
+  @OnRegex('^(jrlp|今日老婆|抽老婆|群老婆)$')
+  @Scope('group')
   async drawWife(ctx: Context): Promise<boolean> {
-    const { JrlpService: JrlpSvc } = await import('@/services/jrlp.js')
-
-    if (!ctx.hasService(JrlpSvc) || ctx.groupId === undefined) {
+    if (ctx.groupId === undefined) {
       return false
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument
-    const svc = ctx.getService(JrlpSvc as any) as unknown as JrlpService
     const today = getTodayShanghai()
 
     let drawResult: Awaited<ReturnType<JrlpService['getOrDraw']>>
     try {
-      drawResult = await svc.getOrDraw({
+      drawResult = await this.jrlpService.getOrDraw({
         groupId: ctx.groupId,
         userId: ctx.userId,
         today,
@@ -70,34 +82,5 @@ class JrlpHandler {
     return true
   }
 }
-
-// ── 装饰器注册 ──
-
-handler({
-  name: 'jrlp',
-  displayName: '今日老婆',
-  description: '每日群内随机抽取群老婆，每人每群每天一次',
-  tags: ['fun'],
-})(JrlpHandler)
-
-SettingNode('jrlp.enabled', {
-  type: 'boolean',
-  default: true,
-  description: '是否启用今日老婆功能',
-})(JrlpHandler)
-
-SettingNode('jrlp.permission', {
-  type: 'enum',
-  default: 'ANYONE',
-  enumOptions: Permission,
-  description: '最低权限等级',
-})(JrlpHandler)
-
-OnRegex('^(jrlp|今日老婆|抽老婆|群老婆)$', 0, {
-  scope: MessageScope.GROUP,
-  displayName: '抽取今日老婆',
-  description: '指令：jrlp / 今日老婆 / 抽老婆 / 群老婆',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(JrlpHandler.prototype.drawWife)
 
 export { JrlpHandler }

@@ -13,8 +13,8 @@ import { ArchiveS3 } from './s3.js'
 
 import { loadConfig } from '@/core/config.js'
 import type { ChatPrismaClient, MainPrismaClient } from '@/core/db.js'
-import { Shutdown, Startup } from '@/core/lifecycle/registry.js'
-import type { OssBuckets } from '@/core/oss/client.js'
+import { Service, Inject, Provide, Startup, Shutdown } from '@/core/lifecycle/decorators/index.js'
+import type { OssBundle, OssBuckets } from '@/core/oss/client.js'
 
 export type { ChatMessage }
 
@@ -295,31 +295,50 @@ export class ChatHistoryService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'chat',
-  provides: ['chat_service', 'archive_service'],
-  requires: ['chat_db', 'db', 'oss', 'media_storage'],
-})(async function (deps: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const config = loadConfig()
-  const chatDb = deps.chat_db as ChatPrismaClient
-  const mainDb = deps.db as MainPrismaClient
-  const { client, buckets } = deps.oss as { client: Client; buckets: OssBuckets }
-  const mediaStorage = deps.media_storage as MediaStorageService | undefined
+@Service({ name: 'chat_bootstrap' })
+export class ChatBootstrap {
+  /** 注入聊天数据库 */
+  @Inject('chat_db')
+  chatDb!: ChatPrismaClient
 
-  const service = new ChatHistoryService(chatDb, mediaStorage)
+  /** 注入主数据库 */
+  @Inject('db')
+  mainDb!: MainPrismaClient
 
-  const exporterSettings = {
-    retentionMonths: 12,
-    batchSize: 5000,
-    compression: 'zstd' as const,
+  /** 注入 OSS 客户端与 bucket 配置 */
+  @Inject('oss')
+  oss!: OssBundle
+
+  /** 注入媒体存储服务 */
+  @Inject('media_storage')
+  mediaStorage!: MediaStorageService
+
+  /** 对外暴露聊天历史服务 */
+  @Provide('chat_service')
+  chatService!: ChatHistoryService
+
+  /** 对外暴露归档服务 */
+  @Provide('archive_service')
+  archiveService!: ArchiveService
+
+  @Startup
+  start(): void {
+    const config = loadConfig()
+    const { client, buckets } = this.oss as { client: Client; buckets: OssBuckets }
+
+    this.chatService = new ChatHistoryService(this.chatDb, this.mediaStorage)
+
+    const exporterSettings = {
+      retentionMonths: 12,
+      batchSize: 5000,
+      compression: 'zstd' as const,
+    }
+    const archiveS3 = new ArchiveS3(client, buckets.archive, config.S3_ARCHIVE_PREFIX)
+    this.archiveService = new ArchiveService(this.chatDb, this.mainDb, exporterSettings, archiveS3)
   }
-  const archiveS3 = new ArchiveS3(client, buckets.archive, config.S3_ARCHIVE_PREFIX)
-  const archiveService = new ArchiveService(chatDb, mainDb, exporterSettings, archiveS3)
 
-  return { chat_service: service, archive_service: archiveService }
-})
-
-Shutdown({ name: 'chat' })(async function (services: Record<string, unknown>): Promise<void> {
-  const svc = services.chat_service as ChatHistoryService | undefined
-  await svc?.close()
-})
+  @Shutdown
+  async stop(): Promise<void> {
+    await this.chatService.close()
+  }
+}

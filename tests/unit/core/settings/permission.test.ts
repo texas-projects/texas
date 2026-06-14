@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-deprecated */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { Permission } from '@/core/dispatch/constants.js'
 import type { Context } from '@/core/dispatch/context.js'
-import { Permission } from '@/core/dispatch/decorators.js'
 import { handlerRegistry } from '@/core/dispatch/registry.js'
 import type { PersonnelService } from '@/core/personnel/index.js'
 import { SettingNode, settingNodeRegistry } from '@/core/settings/decorators.js'

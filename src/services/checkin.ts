@@ -11,7 +11,7 @@ import type { CheckinRecord } from '#prisma/main'
 
 import type { MainPrismaClient } from '@/core/db.js'
 import { isPrismaKnownError } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/index.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 import type { RedisStore } from '@/core/redis/index.js'
 import { cacheKeyRegistry } from '@/core/registries.js'
 import { SHANGHAI_TZ } from '@/core/utils.js'
@@ -439,12 +439,22 @@ export class CheckinService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'checkin_service',
-  provides: ['user_checkin_service'],
-  requires: ['db', 'cache'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  const cache = deps.cache as RedisStore
-  return { user_checkin_service: new CheckinService(db, cache) }
-})
+@Service({ name: 'checkin_service_bootstrap' })
+export class CheckinServiceBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
+
+  /** 注入缓存存储 */
+  @Inject('cache')
+  cache!: RedisStore
+
+  /** 对外暴露签到服务实例 */
+  @Provide('user_checkin_service')
+  checkinService!: CheckinService
+
+  @Startup
+  start(): void {
+    this.checkinService = new CheckinService(this.db, this.cache)
+  }
+}

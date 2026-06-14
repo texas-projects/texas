@@ -7,7 +7,7 @@ import { Prisma } from '#prisma/main'
 
 import type { MainPrismaClient } from '@/core/db.js'
 import { isPrismaKnownError } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/index.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 
 export type { DriftBottleItem, DriftBottlePool, DriftBottleGroupPool }
 
@@ -303,11 +303,18 @@ export class DriftBottleService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'drift_bottle',
-  provides: ['drift_bottle_service'],
-  requires: ['db'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  return { drift_bottle_service: new DriftBottleService(db) }
-})
+@Service({ name: 'drift_bottle_bootstrap' })
+export class DriftBottleBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
+
+  /** 对外暴露漂流瓶服务实例 */
+  @Provide('drift_bottle_service')
+  driftBottleService!: DriftBottleService
+
+  @Startup
+  start(): void {
+    this.driftBottleService = new DriftBottleService(this.db)
+  }
+}

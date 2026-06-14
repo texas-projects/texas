@@ -5,8 +5,8 @@ import { createHash } from 'node:crypto'
 import { logger } from '@logger'
 import type { Client } from 'minio'
 
-import { Startup } from '../lifecycle/registry.js'
-import type { OssBuckets } from '../oss/client.js'
+import { Service, Inject, Provide, Startup } from '../lifecycle/decorators/index.js'
+import type { OssBundle, OssBuckets } from '../oss/client.js'
 import { uploadBuffer, objectExists } from '../oss/utils.js'
 
 const log = logger.child({ module: 'media-storage' })
@@ -105,13 +105,20 @@ export class MediaStorageService {
 
 // ─── 生命周期注册 ──────────────────────────────────────────
 
-Startup({
-  name: 'media_storage',
-  provides: ['media_storage'],
-  requires: ['oss'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const { client, buckets } = deps.oss as { client: Client; buckets: OssBuckets }
-  const service = new MediaStorageService(client, buckets.media)
-  log.info({ bucket: buckets.media }, 'MediaStorageService 就绪')
-  return { media_storage: service }
-})
+@Service({ name: 'media_storage_bootstrap' })
+export class MediaStorageBootstrap {
+  /** 注入 OSS 客户端与 bucket 配置 */
+  @Inject('oss')
+  oss!: OssBundle
+
+  /** 对外暴露 media_storage 服务实例 */
+  @Provide('media_storage')
+  mediaStorageService!: MediaStorageService
+
+  @Startup
+  async start(): Promise<void> {
+    const { client, buckets } = this.oss as { client: Client; buckets: OssBuckets }
+    this.mediaStorageService = new MediaStorageService(client, buckets.media)
+    log.info({ bucket: buckets.media }, 'MediaStorageService 就绪')
+  }
+}

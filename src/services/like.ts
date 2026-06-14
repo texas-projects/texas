@@ -8,7 +8,7 @@ import type { LikeTask, LikeHistory, LikeSource, Prisma } from '#prisma/main'
 
 import type { MainPrismaClient } from '@/core/db.js'
 import { isPrismaKnownError } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/index.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 import type { BotAPI } from '@/core/protocol/index.js'
 
 export type { LikeTask, LikeHistory, LikeSource }
@@ -286,12 +286,22 @@ export class LikeService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'like',
-  provides: ['like_service'],
-  requires: ['db', 'bot_api'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  const botApi = deps.bot_api as BotAPI
-  return { like_service: new LikeService(db, botApi) }
-})
+@Service({ name: 'like_bootstrap' })
+export class LikeBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
+
+  /** 注入 Bot API */
+  @Inject('bot_api')
+  botApi!: BotAPI
+
+  /** 对外暴露点赞服务实例 */
+  @Provide('like_service')
+  likeService!: LikeService
+
+  @Startup
+  start(): void {
+    this.likeService = new LikeService(this.db, this.botApi)
+  }
+}

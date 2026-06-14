@@ -261,54 +261,6 @@ describe('Context.recall', () => {
   })
 })
 
-// ── getService ──
-
-class MyService {
-  greet(): string {
-    return 'hello'
-  }
-}
-
-describe('Context.getService', () => {
-  it('应返回已注册的服务实例', () => {
-    const { bot } = makeMockBot()
-    const svc = new MyService()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    const services = new Map<Function, unknown>([[MyService, svc]])
-    const ctx = new Context(makeGroupMsgEvent('test'), bot, services)
-
-    expect(ctx.getService(MyService)).toBe(svc)
-    expect(ctx.getService(MyService).greet()).toBe('hello')
-  })
-
-  it('未注册的服务应抛出 Error', () => {
-    const { bot } = makeMockBot()
-    const ctx = new Context(makeGroupMsgEvent('test'), bot)
-
-    expect(() => ctx.getService(MyService)).toThrow('MyService')
-  })
-})
-
-// ── hasService ──
-
-describe('Context.hasService', () => {
-  it('注册了的服务 hasService 应为 true', () => {
-    const { bot } = makeMockBot()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-    const services = new Map<Function, unknown>([[MyService, new MyService()]])
-    const ctx = new Context(makeGroupMsgEvent('test'), bot, services)
-
-    expect(ctx.hasService(MyService)).toBe(true)
-  })
-
-  it('未注册的服务 hasService 应为 false', () => {
-    const { bot } = makeMockBot()
-    const ctx = new Context(makeGroupMsgEvent('test'), bot)
-
-    expect(ctx.hasService(MyService)).toBe(false)
-  })
-})
-
 // ── 属性存储 ──
 
 describe('Context.setAttribute / getAttribute', () => {

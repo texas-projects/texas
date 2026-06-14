@@ -9,7 +9,7 @@ import { USER_RELATION_GLOB } from './cache-keys.js'
 import './metrics.js'
 
 import type { MainPrismaClient } from '@/core/db.js'
-import { Startup } from '@/core/lifecycle/registry.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 import type { RedisStore } from '@/core/redis/store.js'
 import { cacheKeyRegistry } from '@/core/registries.js'
 
@@ -497,12 +497,22 @@ export class PersonnelService {
 
 // ── 生命周期注册 ──
 
-Startup({
-  name: 'personnel',
-  provides: ['personnelService'],
-  requires: ['db', 'cache'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  const cache = deps.cache as RedisStore
-  return { personnelService: new PersonnelService(db, cache) }
-})
+@Service({ name: 'personnel_bootstrap' })
+export class PersonnelBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
+
+  /** 注入缓存存储 */
+  @Inject('cache')
+  cache!: RedisStore
+
+  /** 对外暴露人员服务实例 */
+  @Provide('personnelService')
+  personnelService!: PersonnelService
+
+  @Startup
+  start(): void {
+    this.personnelService = new PersonnelService(this.db, this.cache)
+  }
+}

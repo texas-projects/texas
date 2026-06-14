@@ -6,7 +6,9 @@
 
 import { logger } from '@logger'
 
-import { type Context, handler, OnCommand, Permission, SettingNode } from '@/core/dispatch/index.js'
+import { type Context } from '@/core/dispatch/context.js'
+import { Handler, OnCommand, Permission, SettingNode } from '@/core/dispatch/decorators/index.js'
+import { Inject } from '@/core/lifecycle/decorators/index.js'
 import type { FeedbackService } from '@/services/feedback.js'
 
 type FeedbackType = 'bug' | 'suggestion' | 'complaint'
@@ -30,18 +32,33 @@ function parseQuickFeedback(args: string): [FeedbackType | null, string] {
   return [null, args]
 }
 
+@Handler({
+  name: 'feedback',
+  displayName: '用户反馈',
+  description: '用户反馈提交与查询功能',
+  tags: ['user', 'feedback'],
+})
+@SettingNode('enabled', {
+  type: 'boolean',
+  default: true,
+  description: '是否启用用户反馈功能',
+})
+@SettingNode('permission', {
+  type: 'enum',
+  default: 'ANYONE',
+  enumOptions: { ANYONE: 0, GROUP_MEMBER: 10, GROUP_ADMIN: 20, GROUP_OWNER: 30, ADMIN: 100 },
+  description: '最低权限等级',
+})
 class FeedbackHandler {
   private readonly _log = logger.child({ name: 'feedback' })
 
+  @Inject('feedback_service')
+  private readonly feedbackService!: FeedbackService
+
   /** 提交反馈命令。有参数时直接提交，无参数时提示用法。 */
-
+  @OnCommand('/反馈', { aliases: ['/feedback'] })
+  @Permission(0)
   async submitFeedback(ctx: Context): Promise<boolean> {
-    const { FeedbackService: FeedbackSvc } = await import('@/services/feedback.js')
-
-    if (!ctx.hasService(FeedbackSvc)) {
-      return false
-    }
-
     const argStr = ctx.getArgStr().trim()
 
     if (!argStr) {
@@ -56,10 +73,8 @@ class FeedbackHandler {
     const [feedbackType, content] = parseQuickFeedback(argStr)
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument
-      const svc = ctx.getService(FeedbackSvc as any) as unknown as FeedbackService
       const source: FeedbackSource = ctx.isGroupEvent() ? 'group' : 'private'
-      const feedback = await svc.createFeedback({
+      const feedback = await this.feedbackService.createFeedback({
         userId: BigInt(ctx.userId),
         content,
         source,
@@ -76,19 +91,11 @@ class FeedbackHandler {
   }
 
   /** 查询用户最近 5 条反馈。 */
-
+  @OnCommand('/我的反馈', { aliases: ['/myfeedback'] })
+  @Permission(0)
   async myFeedbacks(ctx: Context): Promise<boolean> {
-    const { FeedbackService: FeedbackSvc } = await import('@/services/feedback.js')
-
-    if (!ctx.hasService(FeedbackSvc)) {
-      return false
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument
-    const svc = ctx.getService(FeedbackSvc as any) as unknown as FeedbackService
-
     try {
-      const feedbacks = await svc.getUserFeedbacks(BigInt(ctx.userId), 5)
+      const feedbacks = await this.feedbackService.getUserFeedbacks(BigInt(ctx.userId), 5)
 
       if (feedbacks.length === 0) {
         await ctx.reply('您还没有提交过反馈')
@@ -124,43 +131,5 @@ class FeedbackHandler {
     return true
   }
 }
-
-// ── 装饰器注册 ──
-
-handler({
-  name: 'feedback',
-  displayName: '用户反馈',
-  description: '用户反馈提交与查询功能',
-  tags: ['user', 'feedback'],
-})(FeedbackHandler)
-
-SettingNode('feedback.enabled', {
-  type: 'boolean',
-  default: true,
-  description: '是否启用用户反馈功能',
-})(FeedbackHandler)
-
-SettingNode('feedback.permission', {
-  type: 'enum',
-  default: 'ANYONE',
-  enumOptions: Permission,
-  description: '最低权限等级',
-})(FeedbackHandler)
-
-OnCommand('/反馈', {
-  aliases: new Set(['/feedback']),
-  permission: Permission.ANYONE,
-  displayName: '提交反馈',
-  description: '提交用户反馈，格式：/反馈 [类型] 内容',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(FeedbackHandler.prototype.submitFeedback)
-
-OnCommand('/我的反馈', {
-  aliases: new Set(['/myfeedback']),
-  permission: Permission.ANYONE,
-  displayName: '查询我的反馈',
-  description: '查询用户自己的反馈列表',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(FeedbackHandler.prototype.myFeedbacks)
 
 export { FeedbackHandler }

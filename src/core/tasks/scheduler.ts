@@ -6,7 +6,7 @@ import type { Queue } from 'bullmq'
 import type { TaskDefinition, ScheduleConfig } from './types.js'
 
 import { loadEchoConfig } from '@/core/echo/config.js'
-import { Startup, Shutdown } from '@/core/lifecycle/registry.js'
+import { Service, Inject, Startup } from '@/core/lifecycle/decorators/index.js'
 
 const log = getLogger('task_scheduler')
 
@@ -44,17 +44,14 @@ async function registerScheduledJobs(queue: Queue): Promise<void> {
   }
 }
 
-Startup({
-  name: 'task_scheduler',
-  provides: ['task_scheduler'],
-  requires: ['queue'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const queue = deps.queue as Queue
-  await registerScheduledJobs(queue)
-  return { task_scheduler: true }
-})
+@Service({ name: 'task_scheduler' })
+export class TaskSchedulerBootstrap {
+  /** 注入 BullMQ 队列 */
+  @Inject('queue')
+  queue!: Queue
 
-Shutdown({ name: 'task_scheduler' })(
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  async (_services: Record<string, unknown>): Promise<void> => {},
-)
+  @Startup
+  async start(): Promise<void> {
+    await registerScheduledJobs(this.queue)
+  }
+}

@@ -4,15 +4,16 @@
 
 import { logger } from '@logger'
 
+import { type Context } from '@/core/dispatch/context.js'
 import {
-  type Context,
-  handler,
+  Handler,
   OnStartsWith,
   OnFullMatch,
-  MessageScope,
+  Scope,
   Permission,
   SettingNode,
-} from '@/core/dispatch/index.js'
+} from '@/core/dispatch/decorators/index.js'
+import { Inject } from '@/core/lifecycle/decorators/index.js'
 import { MessageBuilder, Seg, type MessageSegment } from '@/core/protocol/index.js'
 import type { DriftBottleService } from '@/services/drift-bottle.js'
 
@@ -48,20 +49,38 @@ function filterContent(
   return result
 }
 
+@Handler({
+  name: 'drift_bottle',
+  displayName: '漂流瓶',
+  description: '扔/捞漂流瓶，同池内随机互通，每瓶一次性消耗',
+  tags: ['fun'],
+})
+@SettingNode('enabled', {
+  type: 'boolean',
+  default: true,
+  description: '是否启用漂流瓶功能',
+})
+@SettingNode('permission', {
+  type: 'enum',
+  default: 'ANYONE',
+  enumOptions: { ANYONE: 0, GROUP_MEMBER: 10, GROUP_ADMIN: 20, GROUP_OWNER: 30, ADMIN: 100 },
+  description: '最低权限等级',
+})
 class DriftBottleHandler {
   private readonly _log = logger.child({ name: 'driftBottle' })
 
+  @Inject('drift_bottle_service')
+  private readonly driftBottleService!: DriftBottleService
+
   /** 处理扔漂流瓶请求。 */
-
+  @OnStartsWith(TRIGGER_THROW)
+  @Scope('group')
+  @Permission(0)
   async handleThrow(ctx: Context): Promise<boolean> {
-    const { DriftBottleService: DriftSvc } = await import('@/services/drift-bottle.js')
-
-    if (!ctx.hasService(DriftSvc) || ctx.groupId === undefined) {
+    if (ctx.groupId === undefined) {
       return false
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument
-    const svc = ctx.getService(DriftSvc as any) as unknown as DriftBottleService
     const groupId = BigInt(ctx.groupId)
 
     const rawMessage = (ctx.event as Record<string, unknown>).message
@@ -78,8 +97,8 @@ class DriftBottleHandler {
     }
 
     try {
-      const poolId = await svc.getPoolId(groupId)
-      await svc.throwBottle({
+      const poolId = await this.driftBottleService.getPoolId(groupId)
+      await this.driftBottleService.throwBottle({
         poolId,
         senderId: BigInt(ctx.userId),
         senderGroupId: groupId,
@@ -97,22 +116,20 @@ class DriftBottleHandler {
   }
 
   /** 处理捞漂流瓶请求。 */
-
+  @OnFullMatch(TRIGGER_PICK)
+  @Scope('group')
+  @Permission(0)
   async handlePick(ctx: Context): Promise<boolean> {
-    const { DriftBottleService: DriftSvc } = await import('@/services/drift-bottle.js')
-
-    if (!ctx.hasService(DriftSvc) || ctx.groupId === undefined) {
+    if (ctx.groupId === undefined) {
       return false
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unsafe-argument
-    const svc = ctx.getService(DriftSvc as any) as unknown as DriftBottleService
     const groupId = BigInt(ctx.groupId)
 
     let bottle: Awaited<ReturnType<DriftBottleService['pickBottle']>>
     try {
-      const poolId = await svc.getPoolId(groupId)
-      bottle = await svc.pickBottle({ poolId, userId: BigInt(ctx.userId) })
+      const poolId = await this.driftBottleService.getPoolId(groupId)
+      bottle = await this.driftBottleService.pickBottle({ poolId, userId: BigInt(ctx.userId) })
     } catch (err) {
       this._log.error({ groupId: ctx.groupId, userId: ctx.userId, err }, '捞漂流瓶失败')
       await ctx.reply('捞漂流瓶失败，请稍后重试')
@@ -136,43 +153,5 @@ class DriftBottleHandler {
     return true
   }
 }
-
-// ── 装饰器注册 ──
-
-handler({
-  name: 'drift_bottle',
-  displayName: '漂流瓶',
-  description: '扔/捞漂流瓶，同池内随机互通，每瓶一次性消耗',
-  tags: ['fun'],
-})(DriftBottleHandler)
-
-SettingNode('drift_bottle.enabled', {
-  type: 'boolean',
-  default: true,
-  description: '是否启用漂流瓶功能',
-})(DriftBottleHandler)
-
-SettingNode('drift_bottle.permission', {
-  type: 'enum',
-  default: 'ANYONE',
-  enumOptions: Permission,
-  description: '最低权限等级',
-})(DriftBottleHandler)
-
-OnStartsWith(TRIGGER_THROW, {
-  permission: Permission.ANYONE,
-  scope: MessageScope.GROUP,
-  displayName: '扔漂流瓶',
-  description: '消息以「扔漂流瓶」开头时触发，内容包含文字或图片',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(DriftBottleHandler.prototype.handleThrow)
-
-OnFullMatch(TRIGGER_PICK, {
-  permission: Permission.ANYONE,
-  scope: MessageScope.GROUP,
-  displayName: '捞漂流瓶',
-  description: '发送「捞漂流瓶」时随机捞取同池内一个瓶',
-  // eslint-disable-next-line @typescript-eslint/unbound-method
-})(DriftBottleHandler.prototype.handlePick)
 
 export { DriftBottleHandler }

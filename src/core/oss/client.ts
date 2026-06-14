@@ -17,6 +17,12 @@ export interface OssBuckets {
   readonly render: string
 }
 
+/** OSS 客户端与 bucket 配置的聚合对象（通过 'oss' 键注入到服务注册表）。 */
+export interface OssBundle {
+  readonly client: Client
+  readonly buckets: OssBuckets
+}
+
 /**
  * 解析 endpointUrl 并创建 MinIO Client 实例。
  * @param config OSS 连接配置

@@ -19,27 +19,41 @@ import { buildSchemaMap, cleanOrphanKeys } from './schema.js'
 import { SettingsService } from './service.js'
 
 import type { MainPrismaClient } from '@/core/db.js'
-import { Startup, Shutdown } from '@/core/lifecycle/registry.js'
+import { Service, Inject, Provide, Startup } from '@/core/lifecycle/decorators/index.js'
 import type { PersonnelService } from '@/core/personnel/index.js'
 
-Startup({
-  name: 'settings',
-  provides: ['settings', 'settings_checker'],
-  requires: ['db', 'cache_redis', 'personnelService'],
-})(async (deps: Record<string, unknown>): Promise<Record<string, unknown>> => {
-  const db = deps.db as MainPrismaClient
-  const redis = deps.cache_redis as Redis
-  const personnelService = deps.personnelService as PersonnelService
+@Service({ name: 'settings_bootstrap' })
+export class SettingsBootstrap {
+  /** 注入主数据库 */
+  @Inject('db')
+  db!: MainPrismaClient
 
-  const schemaMap = buildSchemaMap()
-  await cleanOrphanKeys(db, schemaMap)
+  /** 注入缓存 Redis 实例 */
+  @Inject('cache_redis')
+  redis!: Redis
 
-  const settings = new SettingsService(db, redis, schemaMap)
-  const settingsChecker = new SettingsPermissionChecker(settings, personnelService, schemaMap)
+  /** 注入人员服务 */
+  @Inject('personnelService')
+  personnelService!: PersonnelService
 
-  return { settings, settings_checker: settingsChecker }
-})
+  /** 对外暴露 settings 服务实例 */
+  @Provide('settings')
+  settings!: SettingsService
 
-Shutdown({ name: 'settings' })(async (): Promise<void> => {
-  // 无需清理资源，Redis/DB 连接由基础设施层管理
-})
+  /** 对外暴露 settings_checker 服务实例 */
+  @Provide('settings_checker')
+  settingsChecker!: SettingsPermissionChecker
+
+  @Startup
+  async start(): Promise<void> {
+    const schemaMap = buildSchemaMap()
+    await cleanOrphanKeys(this.db, schemaMap)
+
+    this.settings = new SettingsService(this.db, this.redis, schemaMap)
+    this.settingsChecker = new SettingsPermissionChecker(
+      this.settings,
+      this.personnelService,
+      schemaMap,
+    )
+  }
+}

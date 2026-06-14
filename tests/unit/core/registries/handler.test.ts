@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-deprecated */
 // tests/unit/core/registries/handler.test.ts
 import { describe, it, expect, beforeEach } from 'vitest'
 
